@@ -4,337 +4,676 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ADM Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-:root {
-  /* Wego brand palette */
-  --bg: #f6faf0;
-  --surface: #ffffff;
-  --surface2: #eef6e1;
-  --border: rgba(0,0,0,0.06);
-  --border2: rgba(0,0,0,0.12);
-  --text: #1f2a17;
-  --muted: #6b7a6b;
-  --accent: #7DBC2A;
-  --accent2: #5a9420;
-  --success: #5a9420;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #06b6d4;
-  --mono: 'DM Mono', monospace;
-  --sans: 'DM Sans', sans-serif;
+:root{
+  --bg:#f6faf0; --surface:#ffffff; --surface2:#eef6e1;
+  --border:rgba(0,0,0,0.06); --border2:rgba(0,0,0,0.10);
+  --text:#1f2a17; --text2:#3a4a30; --muted:#6b7a6b;
+  --accent:#7DBC2A; --accent-h:#5a9420; --accent-soft:#C8F08A;
+  --hero-from:#A8DC4F; --hero-to:#5a9420;
+  --success:#5a9420; --warning:#f59e0b; --danger:#ef4444; --info:#06b6d4;
+  --shadow:0 2px 8px rgba(28,42,12,0.06);
+  --shadow-md:0 8px 24px rgba(28,42,12,0.08);
+  --mono:'DM Mono',monospace; --sans:'DM Sans',sans-serif;
+  --r-md:10px; --r-lg:16px; --r-xl:22px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;overflow:hidden}
 
-/* ── Layout ── */
-.app{display:flex;flex-direction:column;min-height:100vh}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:58px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100}
-.logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;letter-spacing:-0.02em}
-.wego-mark{background:var(--accent);color:#fff;padding:4px 10px;border-radius:6px;font-weight:700;letter-spacing:-0.04em;font-size:14px}
-.wego-mark sup{font-size:14px;color:#fff;margin-left:1px;top:0}
-.wego-mascot{flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(125,188,42,0.30));transition:transform 0.3s}
-.wego-mascot:hover{transform:rotate(-8deg) scale(1.05)}
+/* ─── App shell ─── */
+.app{display:grid;grid-template-columns:240px 1fr;height:100vh}
+@media(max-width:880px){ .app{grid-template-columns:64px 1fr} }
+
+/* ─── Sidebar ─── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:18px 14px;overflow-y:auto}
+.sidebar-logo{display:flex;align-items:center;gap:8px;padding:8px 8px 22px;font-weight:700;font-size:20px;letter-spacing:-0.02em;color:var(--text)}
+.sidebar-logo .plane{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--accent);color:#fff;border-radius:9px;font-size:16px;box-shadow:0 2px 6px rgba(125,188,42,0.30)}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--muted);font-weight:500;font-size:13px;cursor:pointer;text-decoration:none;border:none;background:transparent;font-family:inherit;text-align:left;transition:all .15s}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--surface2);color:var(--accent-h);font-weight:600}
+.nav-item.active .nav-ico{color:var(--accent)}
+.nav-ico{width:18px;display:inline-flex;justify-content:center;color:var(--muted)}
+.sidebar-user{margin-top:auto;background:var(--surface2);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.user-meta{font-size:12px;min-width:0;flex:1}
+.user-meta .name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-meta .email{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+.user-logout{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px}
+.user-logout:hover{color:var(--danger);background:rgba(239,68,68,0.08)}
+
+@media(max-width:880px){
+  .sidebar-logo span:not(.plane){display:none}
+  .sidebar-user .user-meta,.sidebar-user .user-logout{display:none}
+  .nav-item span:not(.nav-ico){display:none}
+  .nav-item{justify-content:center}
+}
+
+/* ─── Main ─── */
+.main{overflow-y:auto;padding:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10}
+.topbar-title{font-size:14px;font-weight:500;color:var(--muted)}
+.topbar-title b{color:var(--text);font-weight:600}
 .topbar-right{display:flex;align-items:center;gap:10px}
-.view-tabs{display:flex;gap:4px;margin-left:24px}
-.view-tab{background:transparent;border:none;color:var(--muted);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all 0.15s}
-.view-tab:hover{color:var(--text);background:var(--surface2)}
-.view-tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 6px rgba(125,188,42,0.30)}
-.analytics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:18px}
-.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
-.chart-card.wide{grid-column:span 2}
-@media(max-width:880px){.chart-card.wide{grid-column:span 1}}
-.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
-.chart-sub{font-size:11px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.06em}
-.chart-card canvas{max-height:280px}
-.timeframe-toggle{display:inline-flex;gap:0;background:var(--surface2);border-radius:6px;padding:2px}
-.timeframe-toggle button{background:transparent;border:none;padding:4px 10px;font-size:11px;color:var(--muted);font-family:var(--sans);cursor:pointer;border-radius:4px;font-weight:500}
-.timeframe-toggle button.active{background:var(--surface);color:var(--accent2);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.summary-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
-.summary-tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
-.summary-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px}
-.summary-value{font-size:18px;font-weight:600;font-family:var(--mono);color:var(--accent2)}
-.main{padding:28px;flex:1}
+.tb-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:9px;background:transparent;border:1px solid var(--border2);color:var(--text);font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s}
+.tb-btn:hover{background:var(--surface2);border-color:var(--accent)}
+.tb-bell{position:relative;width:36px;height:36px;border-radius:50%;background:var(--surface2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.tb-bell .badge-num{position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid var(--surface)}
+.tb-export{background:var(--text);color:#fff;border:none}
+.tb-export:hover{background:var(--accent-h);color:#fff;border-color:var(--accent-h)}
 
-/* ── Metrics ── */
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:28px}
-.metric{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
-.metric-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px}
-.metric-value{font-size:26px;font-weight:600;font-family:var(--mono)}
+/* ─── Hero ─── */
+.hero{margin:24px 28px 18px;border-radius:var(--r-xl);background:linear-gradient(135deg,var(--hero-from) 0%,var(--accent) 60%,var(--hero-to) 100%);padding:36px 40px;display:grid;grid-template-columns:1fr 220px;gap:24px;color:#fff;position:relative;overflow:hidden;box-shadow:var(--shadow-md)}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(255,255,255,0.18) 0%,transparent 45%),radial-gradient(circle at 20% 100%,rgba(255,255,255,0.10) 0%,transparent 40%);pointer-events:none}
+.hero-text{position:relative;z-index:1}
+.hero-text h1{font-size:36px;font-weight:700;line-height:1.05;letter-spacing:-0.02em;margin-bottom:10px;color:#fff}
+.hero-text p{font-size:14px;color:rgba(255,255,255,0.92);max-width:520px;line-height:1.55}
+.hero-mascot{position:relative;z-index:1;display:flex;align-items:center;justify-content:center}
+.hero-mascot .wego-mascot-svg{width:200px;height:200px;filter:drop-shadow(0 12px 24px rgba(0,0,0,0.20))}
+@media(max-width:880px){
+  .hero{grid-template-columns:1fr;padding:28px 24px}
+  .hero-text h1{font-size:26px}
+  .hero-mascot .wego-mascot-svg{width:140px;height:140px;margin:0 auto}
+}
+
+/* ─── Metric tiles (dashboard) ─── */
+.metric-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:0 28px;margin-bottom:18px}
+@media(max-width:1280px){ .metric-row{grid-template-columns:repeat(3,1fr)} }
+@media(max-width:680px){ .metric-row{grid-template-columns:repeat(2,1fr)} }
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 18px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
+.metric-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.metric-ico{flex-shrink:0;width:46px;height:46px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--accent-h);font-size:20px}
+.metric-ico.warn{color:var(--warning);background:rgba(245,158,11,0.10)}
+.metric-ico.red{color:var(--danger);background:rgba(239,68,68,0.10)}
+.metric-ico.cyan{color:var(--info);background:rgba(6,182,212,0.10)}
+.metric-ico.green{color:var(--success);background:rgba(125,188,42,0.12)}
+.metric-info{flex:1;min-width:0}
+.metric-num{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--text);letter-spacing:-0.01em}
+.metric-cap{font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric-trend{font-size:11px;margin-top:4px;font-weight:500}
+.metric-trend.up{color:var(--success)}
+.metric-trend.down{color:var(--danger)}
+
+/* ─── Two-column chart row ─── */
+.chart-row{display:grid;grid-template-columns:1fr 1.4fr;gap:14px;padding:0 28px;margin-bottom:18px}
+@media(max-width:1100px){ .chart-row{grid-template-columns:1fr} }
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+.card-sel{background:var(--surface2);border:none;padding:5px 10px;border-radius:7px;font-size:12px;color:var(--muted);font-family:inherit;cursor:pointer}
+.donut-wrap{display:flex;align-items:center;gap:18px}
+.donut-canvas-wrap{position:relative;width:160px;height:160px;flex-shrink:0}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.donut-center .v{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.donut-center .l{font-size:11px;color:var(--muted)}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:8px}
+.legend-row{display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.legend-row .l{display:flex;align-items:center;gap:8px;color:var(--text)}
+.legend-row .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.legend-row .v{font-family:var(--mono);color:var(--muted)}
+
+/* ─── Sparkline cards ─── */
+.spark-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:0 28px;margin-bottom:24px}
+@media(max-width:1100px){ .spark-row{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:560px){ .spark-row{grid-template-columns:1fr} }
+.spark-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.spark-head{display:flex;align-items:center;gap:10px}
+.spark-head .ico{width:34px;height:34px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--accent-h);font-size:14px}
+.spark-head .ico.warn{color:var(--warning);background:rgba(245,158,11,0.10)}
+.spark-head .ico.red{color:var(--danger);background:rgba(239,68,68,0.10)}
+.spark-head .ico.cyan{color:var(--info);background:rgba(6,182,212,0.10)}
+.spark-head .ico.green{color:var(--success);background:rgba(125,188,42,0.12)}
+.spark-title{font-size:13px;font-weight:600;color:var(--text)}
+.spark-num{font-size:28px;font-weight:700;font-family:var(--mono);color:var(--text);line-height:1}
+.spark-sub{font-size:11px;color:var(--muted);line-height:1.4;min-height:30px}
+.spark-canvas-wrap{position:relative;height:50px}
+.spark-link{font-size:12px;color:var(--accent-h);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-top:auto;cursor:pointer;background:transparent;border:none;font-family:inherit;padding:0;align-self:flex-start}
+.spark-link:hover{color:var(--accent)}
+
+/* ─── Recent ADMs ─── */
+.recent-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px 6px;margin:0 28px 28px;box-shadow:var(--shadow)}
+.recent-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.recent-card .recent-title{font-size:14px;font-weight:600}
+.recent-link{font-size:12px;color:var(--accent-h);font-weight:600;background:transparent;border:none;cursor:pointer;font-family:inherit}
+.recent-card table{width:100%;border-collapse:collapse;font-size:13px}
+.recent-card th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border)}
+.recent-card td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+.recent-card tr:last-child td{border-bottom:none}
+
+/* ─── Badges (shared) ─── */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-dispute{background:rgba(239,68,68,0.13);color:#a13e3e}
+.badge-accepted{background:rgba(125,188,42,0.18);color:#5a9420}
+.badge-pending{background:rgba(245,158,11,0.15);color:#92660b}
+.badge-review{background:rgba(99,102,241,0.13);color:#454ac0}
+.badge-paid{background:rgba(125,188,42,0.18);color:#5a9420}
+.badge-received{background:rgba(6,182,212,0.13);color:#0c7a8c}
+.badge-needs-review{background:rgba(245,158,11,0.16);color:#92660b}
+.badge-na{background:rgba(107,114,153,0.10);color:#6b7a99}
+.badge-yes{background:rgba(125,188,42,0.16);color:#5a9420}
+.badge-no{background:rgba(107,114,153,0.10);color:#6b7a99}
+
+/* ─── Views switching ─── */
+.view{display:none}
+.view.active{display:block}
+.view-pad{padding:24px 28px}
+
+/* ─── Tracker view: metrics + toolbar + table (kept from original, restyled) ─── */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--shadow)}
+.metric-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px}
+.metric-value{font-size:24px;font-weight:600;font-family:var(--mono);color:var(--text)}
 .metric-value.blue{color:var(--accent)}
 .metric-value.amber{color:var(--warning)}
 .metric-value.red{color:var(--danger)}
 .metric-value.green{color:var(--success)}
 
-/* ── Toolbar ── */
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
-.search-wrap{position:relative;flex:1;min-width:200px;max-width:320px}
-.search-wrap input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 12px 8px 34px;font-size:13px;font-family:var(--sans);outline:none}
+.search-wrap{position:relative;flex:1;min-width:220px;max-width:360px}
+.search-wrap input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:10px;color:var(--text);padding:9px 12px 9px 36px;font-size:13px;font-family:var(--sans);outline:none}
 .search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(125,188,42,0.15)}
-.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
-select.filter{background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;font-family:var(--sans);outline:none;cursor:pointer}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+select.filter{background:var(--surface);border:1px solid var(--border2);border-radius:10px;color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none;cursor:pointer}
 select.filter:focus{border-color:var(--accent)}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-family:var(--sans);font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;font-size:13px;font-family:var(--sans);font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
 .btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:var(--accent2)}
+.btn-primary:hover{background:var(--accent-h)}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2)}
-.btn-ghost:hover{color:var(--text);border-color:var(--border2);background:var(--surface2)}
+.btn-ghost:hover{color:var(--text);background:var(--surface2)}
 .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,0.3)}
 .btn-danger:hover{background:rgba(239,68,68,0.1)}
-.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:7px}
 
-/* ── Table ── */
-.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-table{width:100%;border-collapse:collapse;font-size:13px}
-thead tr{background:var(--surface2);border-bottom:1px solid var(--border2)}
-th{padding:11px 14px;text-align:left;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap}
-td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(125,188,42,0.04)}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+table.adm-table{width:100%;border-collapse:collapse;font-size:13px}
+table.adm-table thead tr{background:var(--surface2);border-bottom:1px solid var(--border2)}
+table.adm-table th{padding:12px 14px;text-align:left;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap}
+table.adm-table td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+table.adm-table tr:last-child td{border-bottom:none}
+table.adm-table tr:hover td{background:rgba(125,188,42,0.04)}
 .mono{font-family:var(--mono);font-size:12px}
 .amount{font-family:var(--mono);font-weight:500;color:var(--warning)}
 
-/* ── Badges ── */
-.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
-.badge-dispute{background:rgba(239,68,68,0.15);color:#fca5a5}
-.badge-accepted{background:rgba(34,197,94,0.15);color:#86efac}
-.badge-pending{background:rgba(245,158,11,0.15);color:#fcd34d}
-.badge-review{background:rgba(99,102,241,0.15);color:#a5b4fc}
-.badge-yes{background:rgba(34,197,94,0.12);color:#86efac}
-.badge-no{background:rgba(107,114,153,0.12);color:#6b7a99}
-.badge-paid{background:rgba(125,188,42,0.18);color:#5a9420}
-.badge-received{background:rgba(6,182,212,0.15);color:#0e7490}
-.badge-needs-review{background:rgba(245,158,11,0.18);color:#b45309}
-.badge-na{background:rgba(107,114,153,0.10);color:#6b7a99}
-.tax-grid{display:flex;flex-wrap:wrap;gap:6px;background:var(--surface2);padding:10px;border:1px solid var(--border2);border-radius:8px;max-height:160px;overflow-y:auto}
+/* tax chips, check chips, multi-cells (kept from original) */
+.tax-grid{display:flex;flex-wrap:wrap;gap:6px;background:var(--surface2);padding:10px;border:1px solid var(--border2);border-radius:10px;max-height:160px;overflow-y:auto}
 .tax-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;background:var(--surface);border:1px solid var(--border2);cursor:pointer;font-size:12px;font-family:var(--mono);transition:all 0.12s;user-select:none}
 .tax-chip:hover{border-color:var(--accent);background:#fafdf6}
-.tax-chip.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 1px 4px rgba(125,188,42,0.30)}
+.tax-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .tax-chip-title{font-weight:600}
-.tax-add-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:14px;background:transparent;border:1px dashed var(--border2);cursor:pointer;font-size:12px;color:var(--accent2);font-family:var(--sans)}
+.tax-add-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:14px;background:transparent;border:1px dashed var(--border2);cursor:pointer;font-size:12px;color:var(--accent-h);font-family:var(--sans)}
 .tax-add-btn:hover{border-color:var(--accent);background:#fafdf6}
-.reason-add-link{font-size:11px;color:var(--accent2);background:transparent;border:none;cursor:pointer;font-weight:500;text-decoration:underline;margin-top:4px;padding:0;font-family:var(--sans)}
+.reason-add-link{font-size:11px;color:var(--accent-h);background:transparent;border:none;cursor:pointer;font-weight:500;text-decoration:underline;margin-top:4px;padding:0;font-family:var(--sans)}
 .reason-add-link:hover{color:var(--accent)}
-.tax-cell{display:inline-flex;flex-wrap:wrap;gap:3px;max-width:180px}
+.tax-cell,.platform-cell,.causedby-cell,.multi-cell{display:inline-flex;flex-wrap:wrap;gap:3px;max-width:200px}
 .tax-cell .badge{font-family:var(--mono);font-size:10px;background:rgba(125,188,42,0.15);color:#5a9420;padding:2px 6px}
-.check-grid{display:flex;flex-wrap:wrap;gap:6px;background:var(--surface2);padding:10px;border:1px solid var(--border2);border-radius:8px}
+.platform-cell .badge{font-size:10px;background:rgba(99,102,241,0.15);color:#454ac0;padding:2px 7px;font-weight:500}
+.causedby-cell .badge{font-size:10px;background:rgba(245,158,11,0.15);color:#92660b;padding:2px 7px;font-weight:500}
+.mono-badge{font-family:var(--mono);font-size:10px;background:rgba(99,102,241,0.10);color:#454ac0;padding:2px 6px}
+.check-grid{display:flex;flex-wrap:wrap;gap:6px;background:var(--surface2);padding:10px;border:1px solid var(--border2);border-radius:10px}
 .check-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:18px;background:var(--surface);border:1.5px solid var(--border2);cursor:pointer;font-size:12px;transition:all 0.12s;user-select:none;font-weight:500}
 .check-chip:hover{border-color:var(--accent);background:#fafdf6}
-.check-chip.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 1px 4px rgba(125,188,42,0.30)}
+.check-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .check-chip-mark{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;background:#fff;font-size:10px;color:transparent;line-height:1}
 .check-chip.on .check-chip-mark{background:#fff;border-color:#fff;color:var(--accent)}
-.platform-cell,.causedby-cell{display:inline-flex;flex-wrap:wrap;gap:3px;max-width:200px}
-.platform-cell .badge{font-size:10px;background:rgba(99,102,241,0.15);color:#4338ca;padding:2px 7px;font-weight:500}
-.causedby-cell .badge{font-size:10px;background:rgba(245,158,11,0.15);color:#b45309;padding:2px 7px;font-weight:500}
-.multi-cell{display:inline-flex;flex-wrap:wrap;gap:3px;max-width:200px}
-.mono-badge{font-family:var(--mono);font-size:10px;background:rgba(99,102,241,0.10);color:#4338ca;padding:2px 6px}
 
-/* ── Empty state ── */
+/* empty + loading */
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty-icon{font-size:40px;margin-bottom:12px;opacity:0.3}
 .empty h3{font-size:15px;color:var(--text);margin-bottom:6px}
-
-/* ── Loading ── */
-.loading{text-align:center;padding:60px;color:var(--muted)}
-.spinner{display:inline-block;width:24px;height:24px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:12px}
+.loading{text-align:center;padding:60px 20px;color:var(--muted)}
+.spinner{width:32px;height:32px;border:3px solid var(--surface2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── Toast ── */
-.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:999}
-.toast{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:12px 18px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);animation:slideIn 0.2s ease;min-width:240px}
-.toast.success{border-color:rgba(34,197,94,0.3)}
-.toast.error{border-color:rgba(239,68,68,0.3)}
-@keyframes slideIn{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* analytics */
+.analytics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:18px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow)}
+.chart-card.wide{grid-column:span 2}
+@media(max-width:880px){.chart-card.wide{grid-column:span 1}}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.chart-sub{font-size:11px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.06em}
+.chart-card canvas{max-height:280px}
+.timeframe-toggle{display:inline-flex;gap:0;background:var(--surface2);border-radius:7px;padding:2px}
+.timeframe-toggle button{background:transparent;border:none;padding:4px 10px;font-size:11px;color:var(--muted);font-family:var(--sans);cursor:pointer;border-radius:5px;font-weight:500}
+.timeframe-toggle button.active{background:var(--surface);color:var(--accent-h);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.summary-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.summary-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;box-shadow:var(--shadow)}
+.summary-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px}
+.summary-value{font-size:20px;font-weight:600;font-family:var(--mono);color:var(--accent-h)}
 
-/* ── Modal ── */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;backdrop-filter:blur(4px)}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:28px}
-.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+/* ─── Mascot animations (carried over from original) ─── */
+.wego-mascot-svg{width:100%;height:100%;display:block;overflow:visible;transform-origin:50% 90%;animation:wego-float 4s ease-in-out infinite}
+.wego-mascot-svg .mascot-body{transform-origin:50% 88%;animation:wego-breathe 2.6s ease-in-out infinite}
+.wego-mascot-svg .mascot-shadow{transform-origin:50% 92%;animation:wego-shadow-scale 4s ease-in-out infinite}
+.wego-mascot-svg .fuzz-back path{transform-origin:center;animation:wego-fuzz 3s ease-in-out infinite}
+.wego-mascot-svg .pupil{transform-origin:center;animation:wego-blink 5s ease-in-out infinite}
+.wego-mascot-svg .spark{opacity:0;animation:wego-sparkle 3s ease-in-out infinite}
+.wego-mascot-svg .spark.s1{animation-delay:0s}.wego-mascot-svg .spark.s2{animation-delay:.7s}
+.wego-mascot-svg .spark.s3{animation-delay:1.4s}.wego-mascot-svg .spark.s4{animation-delay:2.1s}
+.wego-mascot-svg .mascot-fists{transform-origin:50% 60%;animation:wego-cheer 2.8s ease-in-out infinite}
+.wego-mascot-svg .mascot-antennae{transform-origin:50% 30%;animation:wego-antennae 3s ease-in-out infinite}
+@keyframes wego-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+@keyframes wego-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,.97)}}
+@keyframes wego-shadow-scale{0%,100%{transform:scaleX(1);opacity:.20}50%{transform:scaleX(.85);opacity:.12}}
+@keyframes wego-fuzz{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes wego-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes wego-sparkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:.9;transform:scale(1.4)}}
+@keyframes wego-cheer{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px) rotate(-1deg)}}
+@keyframes wego-antennae{0%,100%{transform:rotate(0deg)}50%{transform:rotate(2deg)}}
+@media(prefers-reduced-motion:reduce){
+  .wego-mascot-svg,.mascot-body,.pupil,.spark,.fuzz-back path,.mascot-fists,.mascot-antennae,.mascot-shadow{animation:none!important}
+}
+
+/* ─── Modal styles (compact, restyled) ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(28,42,12,0.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;animation:fade .15s ease}
+.modal{background:var(--surface);border-radius:var(--r-xl);max-width:760px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.20)}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .modal-title{font-size:17px;font-weight:600}
-.close-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;padding:4px}
-.close-btn:hover{color:var(--text)}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.form-group{display:flex;flex-direction:column;gap:6px}
-.form-group.full{grid-column:1/-1}
-label{font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:0.06em}
-input[type=text],input[type=date],input[type=number],select.form-select,textarea{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none;width:100%}
-input:focus,select.form-select:focus,textarea:focus{border-color:var(--accent)}
-textarea{resize:vertical;min-height:72px}
-.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px 10px;border-radius:8px}
+.modal-close:hover{background:var(--surface2);color:var(--text)}
+.modal-body{padding:22px 24px;overflow-y:auto;display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.modal-body .form-field{display:flex;flex-direction:column;gap:5px}
+.modal-body .form-field.full{grid-column:1/-1}
+.modal-body label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em}
+.modal-body input,.modal-body select,.modal-body textarea,.form-input,.form-select{background:var(--surface);border:1.5px solid var(--border2);border-radius:9px;padding:9px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none;transition:all .15s;width:100%}
+.modal-body input:focus,.modal-body select:focus,.modal-body textarea:focus,.form-input:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(125,188,42,0.15)}
+.modal-body textarea{resize:vertical;min-height:64px;font-family:var(--sans)}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+@keyframes fade{from{opacity:0}to{opacity:1}}
 
-/* ── Action column ── */
-.actions{display:flex;gap:6px;align-items:center}
+/* file drop */
+.file-drop{border:2px dashed var(--border2);border-radius:12px;padding:30px 20px;text-align:center;color:var(--muted);cursor:pointer;transition:all .15s}
+.file-drop:hover{border-color:var(--accent);background:#fafdf6}
+.file-drop.drag{border-color:var(--accent);background:#fafdf6;color:var(--accent-h)}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.thumb{width:100px;height:100px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);overflow:hidden;position:relative}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .x{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1}
+.parse-status{padding:10px 14px;border-radius:9px;font-size:13px;margin:10px 0}
+.parse-status.loading{background:rgba(6,182,212,0.10);color:#0c7a8c}
+.parse-status.success{background:rgba(125,188,42,0.13);color:#5a9420}
+.parse-status.error{background:rgba(239,68,68,0.10);color:#a13e3e}
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+table.parsed-table{width:100%;border-collapse:collapse;font-size:12px}
+table.parsed-table th,table.parsed-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left}
+table.parsed-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;background:var(--surface2)}
 
-/* ── Deadline warning ── */
-.overdue{color:var(--danger)}
-.due-soon{color:var(--warning)}
+/* toast */
+#toast-container{position:fixed;top:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:200}
+.toast{background:var(--text);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;box-shadow:0 8px 20px rgba(0,0,0,0.18);animation:slide-in .2s ease}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--danger)}
+@keyframes slide-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
 
-/* ── Upload modal ── */
-.upload-zone{border:2px dashed var(--border2);border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface2)}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(59,130,246,0.05)}
-.upload-zone-icon{font-size:32px;margin-bottom:10px;opacity:0.5}
-.upload-zone-text{font-size:14px;color:var(--muted);margin-bottom:4px}
-.upload-zone-sub{font-size:12px;color:var(--muted);opacity:0.6}
-#file-input{display:none}
-.parse-table-wrap{max-height:320px;overflow-y:auto;margin-top:16px;border-radius:8px;border:1px solid var(--border)}
-.parse-table{width:100%;border-collapse:collapse;font-size:12px}
-.parse-table th{background:var(--surface2);padding:8px 10px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;position:sticky;top:0}
-.parse-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--mono)}
-.parse-table tr:last-child td{border-bottom:none}
-.parse-table tr:hover td{background:rgba(125,188,42,0.04)}
-.parse-check{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
-.fx-badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;background:rgba(6,182,212,0.15);color:#67e8f9;font-family:var(--mono)}
-.parse-status{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px}
-.parse-status.loading{background:rgba(59,130,246,0.1);color:var(--accent)}
-.parse-status.success{background:rgba(34,197,94,0.1);color:var(--success)}
-.parse-status.error{background:rgba(239,68,68,0.1);color:var(--danger)}
-.mini-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(59,130,246,0.3);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
-
-  /* ── Animated Wego visuals ── */
-  body{position:relative;overflow-x:hidden}
-  .wego-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;
-    background:linear-gradient(135deg,#f6faf0 0%,#e8f5d4 50%,#f0f8db 100%)}
-  .wego-bg::before,.wego-bg::after{content:"";position:absolute;border-radius:50%;
-    filter:blur(60px);opacity:.55;animation:blob-drift 22s ease-in-out infinite}
-  .wego-bg::before{width:460px;height:460px;
-    background:radial-gradient(circle,#A8DC4F 0%,transparent 70%);top:-100px;left:-120px}
-  .wego-bg::after{width:520px;height:520px;
-    background:radial-gradient(circle,#7DBC2A 0%,transparent 70%);
-    bottom:-150px;right:-150px;animation-delay:-11s}
-  .wego-bg .blob3{position:absolute;width:320px;height:320px;
-    background:radial-gradient(circle,#C8F08A 0%,transparent 70%);
-    border-radius:50%;filter:blur(50px);opacity:.45;top:50%;left:50%;
-    animation:blob-drift 18s ease-in-out infinite -7s}
-  @keyframes blob-drift{0%,100%{transform:translate(0,0) scale(1)}
-    33%{transform:translate(60px,-40px) scale(1.15)}
-    66%{transform:translate(-50px,30px) scale(.9)}}
-  .wego-bg .float-dot{position:absolute;width:8px;height:8px;
-    background:rgba(125,188,42,.35);border-radius:50%;animation:float-up 14s linear infinite}
-  @keyframes float-up{from{transform:translateY(110vh) translateX(0);opacity:0}
-    10%{opacity:1}90%{opacity:1}to{transform:translateY(-15vh) translateX(40px);opacity:0}}
-  .mascot-3d{width:120px;height:120px;margin:0 auto 12px;display:block;
-    filter:drop-shadow(0 12px 28px rgba(125,188,42,.30));perspective:600px}
-  .wego-mascot-svg{width:100%;height:100%;display:block;overflow:visible;
-    transform-origin:50% 90%;animation:wego-float 4s ease-in-out infinite}
-  .wego-mascot-svg .mascot-body{transform-origin:50% 88%;animation:wego-breathe 2.6s ease-in-out infinite}
-  .wego-mascot-svg .mascot-shadow{transform-origin:50% 92%;animation:wego-shadow-scale 4s ease-in-out infinite}
-  .wego-mascot-svg .fuzz-back circle{transform-origin:center;animation:wego-fuzz 3s ease-in-out infinite}
-  .wego-mascot-svg .fuzz-back circle:nth-child(2n){animation-delay:-.5s}
-  .wego-mascot-svg .fuzz-back circle:nth-child(3n){animation-delay:-1.2s}
-  .wego-mascot-svg .pupil{transform-origin:center;animation:wego-blink 5s ease-in-out infinite}
-  .wego-mascot-svg .spark{opacity:0;animation:wego-sparkle 3s ease-in-out infinite}
-  .wego-mascot-svg .spark.s1{animation-delay:0s}.wego-mascot-svg .spark.s2{animation-delay:.7s}
-  .wego-mascot-svg .spark.s3{animation-delay:1.4s}.wego-mascot-svg .spark.s4{animation-delay:2.1s}
-  @keyframes wego-float{0%,100%{transform:translateY(0) rotate(-2deg)}
-    50%{transform:translateY(-8px) rotate(2deg)}}
-  @keyframes wego-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.04,.97)}}
-  @keyframes wego-shadow-scale{0%,100%{transform:scaleX(1);opacity:.18}
-    50%{transform:scaleX(.85);opacity:.10}}
-  @keyframes wego-fuzz{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
-  @keyframes wego-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
-  @keyframes wego-sparkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:.9;transform:scale(1.4)}}
-  @media (prefers-reduced-motion: reduce){
-    .wego-mascot-svg,.mascot-body,.pupil,.spark,.fuzz-back circle,
-    .wego-bg::before,.wego-bg::after,.wego-bg .blob3,.wego-bg .float-dot{animation:none!important}
-  }
+.admin-row{padding:8px 10px;border-bottom:1px solid var(--border);font-size:13px}
+.admin-row:last-child{border-bottom:none}
 </style>
 </head>
 <body>
-<div class="wego-bg" aria-hidden="true">
-  <div class="blob3"></div>
-  <span class="float-dot" style="left:10%;animation-delay:0s"></span>
-  <span class="float-dot" style="left:25%;animation-delay:-3s"></span>
-  <span class="float-dot" style="left:40%;animation-delay:-7s"></span>
-  <span class="float-dot" style="left:60%;animation-delay:-2s"></span>
-  <span class="float-dot" style="left:75%;animation-delay:-5s"></span>
-  <span class="float-dot" style="left:90%;animation-delay:-9s"></span>
-</div>
-
 <div class="app">
+  <!-- ─── Sidebar ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="plane">✈</span>
+      <span>ADM</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard"><span class="nav-ico">▦</span><span>Dashboard</span></button>
+      <button class="nav-item" data-view="tracker"><span class="nav-ico">▤</span><span>ADMs</span></button>
+      <button class="nav-item" data-view="analytics"><span class="nav-ico">⌭</span><span>Analytics</span></button>
+      <button class="nav-item" data-view="reasons"><span class="nav-ico">◉</span><span>Reasons</span></button>
+      <button class="nav-item" data-view="taxes"><span class="nav-ico">$</span><span>Taxes</span></button>
+      <button class="nav-item" data-view="settings"><span class="nav-ico">⚙</span><span>Settings</span></button>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">A</div>
+      <div class="user-meta">
+        <div class="name" id="user-name">Loading…</div>
+        <div class="email" id="user-email">—</div>
+      </div>
+      <button class="user-logout" onclick="logout()" title="Sign out">⎋</button>
+    </div>
+  </aside>
 
-  <!-- Topbar -->
-  <div class="topbar">
-    <div class="logo">
-      <div style="width:42px;height:42px;flex-shrink:0"><div class="mascot-3d" style="width:42px;height:42px;margin:0;filter:none">
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="wego-mascot-svg">
-    <defs>
-      <radialGradient id="bodyGrad" cx="40%" cy="35%" r="65%">
-        <stop offset="0%" stop-color="#C8F08A"/><stop offset="35%" stop-color="#A8DC4F"/>
-        <stop offset="70%" stop-color="#7DBC2A"/><stop offset="100%" stop-color="#3d6a14"/>
-      </radialGradient>
-      <radialGradient id="hl" cx="35%" cy="30%" r="25%">
-        <stop offset="0%" stop-color="rgba(255,255,255,0.85)"/>
-        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-      </radialGradient>
-      <radialGradient id="eyeGrad" cx="40%" cy="40%" r="60%">
-        <stop offset="0%" stop-color="#fff"/><stop offset="80%" stop-color="#f0f0f0"/>
-        <stop offset="100%" stop-color="#d0d0d0"/>
-      </radialGradient>
-      <filter id="softShadow" x="-20%" y="-10%" width="140%" height="130%">
-        <feGaussianBlur in="SourceAlpha" stdDeviation="2.5"/><feOffset dx="0" dy="3"/>
-        <feComponentTransfer><feFuncA type="linear" slope="0.4"/></feComponentTransfer>
-        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-    </defs>
-    <ellipse class="mascot-shadow" cx="50" cy="92" rx="22" ry="3" fill="rgba(0,0,0,0.18)"/>
-    <g class="fuzz-back" fill="#5a9420" opacity="0.85">
-      <circle cx="14" cy="32" r="4"/><circle cx="86" cy="32" r="4"/>
-      <circle cx="10" cy="55" r="3.5"/><circle cx="90" cy="55" r="3.5"/>
-      <circle cx="22" cy="14" r="3"/><circle cx="78" cy="14" r="3"/>
-      <circle cx="50" cy="6" r="3"/><circle cx="32" cy="78" r="3.2"/><circle cx="68" cy="78" r="3.2"/>
-    </g>
-    <g class="mascot-body" filter="url(#softShadow)">
-      <ellipse cx="50" cy="52" rx="32" ry="35" fill="url(#bodyGrad)"/>
-      <ellipse cx="38" cy="36" rx="18" ry="14" fill="url(#hl)"/>
-      <ellipse cx="32" cy="28" rx="3" ry="2" fill="rgba(255,255,255,0.6)"/>
-      <g class="mascot-eyes">
-        <ellipse cx="38" cy="48" rx="6" ry="7.5" fill="url(#eyeGrad)"/>
-        <ellipse cx="62" cy="48" rx="6" ry="7.5" fill="url(#eyeGrad)"/>
-        <circle class="pupil" cx="39" cy="49" r="3" fill="#1a2e0b"/>
-        <circle class="pupil" cx="63" cy="49" r="3" fill="#1a2e0b"/>
-        <circle cx="40" cy="47.5" r="1.1" fill="#fff"/>
-        <circle cx="64" cy="47.5" r="1.1" fill="#fff"/>
-      </g>
-      <path d="M40 64 Q50 72 60 64" stroke="#1a2e0b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      <path d="M44 65 Q50 70 56 65 Q50 72 44 65 Z" fill="#a83c5e" opacity="0.7"/>
-      <ellipse cx="29" cy="60" rx="4" ry="2.4" fill="#ef8f8f" opacity="0.55"/>
-      <ellipse cx="71" cy="60" rx="4" ry="2.4" fill="#ef8f8f" opacity="0.55"/>
-      <ellipse cx="38" cy="86" rx="6" ry="3" fill="#3d6a14"/>
-      <ellipse cx="62" cy="86" rx="6" ry="3" fill="#3d6a14"/>
-    </g>
-    <g class="sparkles" fill="#7DBC2A">
-      <circle class="spark s1" cx="15" cy="20" r="1.6"/>
-      <circle class="spark s2" cx="85" cy="20" r="1.4"/>
-      <circle class="spark s3" cx="90" cy="65" r="1.5"/>
-      <circle class="spark s4" cx="10" cy="68" r="1.3"/>
-    </g>
-  </svg>
-</div>
-</div>
-      <span class="wego-mark">wego<sup>.</sup></span>
-      <span style="opacity:0.5;font-weight:400;margin:0 4px">/</span>
-      <span style="font-weight:500">ADM Tracker</span>
-    </div>
-    <div class="view-tabs">
-      <button class="view-tab active" data-view="tracker" onclick="switchView('tracker')">📋 Tracker</button>
-      <button class="view-tab" data-view="analytics" onclick="switchView('analytics')">📊 Analytics</button>
-    </div>
-    <div class="topbar-right">
-      <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
-      <button class="btn btn-ghost btn-sm" onclick="openUploadModal()" style="color:var(--info);border-color:rgba(6,182,212,0.3)">⬆ Import File</button>
-      <button class="btn btn-primary" onclick="openModal()">+ Add ADM</button>
-      <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:var(--danger)" title="Sign out">↩</button>
-    </div>
-  </div>
+  <!-- ─── Main ─── -->
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">Welcome back · <b id="topbar-section">Dashboard</b></div>
+      <div class="topbar-right">
+        <div class="tb-bell" title="Notifications">🔔<span class="badge-num" id="notif-count" style="display:none">0</span></div>
+        <button class="tb-btn tb-export" onclick="exportCSV()"><span>⬇</span> Export Report</button>
+      </div>
+    </header>
 
-  <div class="main">
+    <!-- ─── DASHBOARD VIEW ─── -->
+    <section class="view view-dashboard active">
+      <div class="hero">
+        <div class="hero-text">
+          <h1>Let's Fight ADMs<br>Together</h1>
+          <p>Identify. Prevent. Track. Recover. Your end-to-end ADM management workspace for the team.</p>
+        </div>
+        <div class="hero-mascot"><svg viewBox="-12 -28 124 138" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="wego-mascot-svg">
+  <defs>
+    <radialGradient id="m_body" cx="38%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="#D8F896"/>
+      <stop offset="22%" stop-color="#B8E866"/>
+      <stop offset="50%" stop-color="#8FC93A"/>
+      <stop offset="80%" stop-color="#5a9420"/>
+      <stop offset="100%" stop-color="#2d4e0a"/>
+    </radialGradient>
+    <radialGradient id="m_hl" cx="32%" cy="22%" r="38%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.95)"/>
+      <stop offset="55%" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+    <radialGradient id="m_eye" cx="38%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="78%" stop-color="#f3f3f3"/>
+      <stop offset="100%" stop-color="#c0c0c0"/>
+    </radialGradient>
+    <radialGradient id="m_iris" cx="40%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#3a5d18"/>
+      <stop offset="60%" stop-color="#1a2e0b"/>
+      <stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="m_ant" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#C8F08A"/>
+      <stop offset="100%" stop-color="#5a9420"/>
+    </radialGradient>
+    <filter id="m_shadow" x="-30%" y="-10%" width="160%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/><feOffset dy="3"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <ellipse class="mascot-shadow" cx="50" cy="98" rx="28" ry="3.4" fill="rgba(0,0,0,0.22)"/>
+  <g class="mascot-antennae">
+    <path d="M 34 26 Q 22 12 26 -18" stroke="#4a7a18" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="26" cy="-19" r="4.2" fill="url(#m_ant)"/>
+    <circle cx="24.5" cy="-21" r="1.2" fill="rgba(255,255,255,0.7)"/>
+    <path d="M 66 26 Q 78 12 74 -18" stroke="#4a7a18" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="74" cy="-19" r="4.2" fill="url(#m_ant)"/>
+    <circle cx="72.5" cy="-21" r="1.2" fill="rgba(255,255,255,0.7)"/>
+  </g>
+  <g class="fuzz-back" fill="#3d6a14" opacity="0.95">
+      <path d="M77.6 60.6L89.0 58.0L77.6 55.4Z"/>
+      <path d="M76.6 66.5L89.0 66.3L77.6 61.4Z"/>
+      <path d="M74.5 72.0L87.5 74.7L76.5 67.2Z"/>
+      <path d="M71.5 77.0L84.4 82.7L74.4 72.7Z"/>
+      <path d="M67.7 81.3L77.6 87.7L71.4 77.6Z"/>
+      <path d="M63.2 84.7L72.1 93.6L67.5 81.8Z"/>
+      <path d="M58.2 87.0L65.5 98.3L63.0 85.1Z"/>
+      <path d="M52.8 88.3L58.1 101.5L57.9 87.3Z"/>
+      <path d="M47.4 88.4L50.0 100.0L52.6 88.4Z"/>
+      <path d="M42.1 87.3L42.2 100.0L47.2 88.3Z"/>
+      <path d="M37.0 85.1L34.5 98.3L41.8 87.0Z"/>
+      <path d="M32.5 81.8L27.0 94.9L36.8 84.7Z"/>
+      <path d="M28.6 77.6L22.4 87.7L32.3 81.3Z"/>
+      <path d="M25.6 72.7L16.9 81.8L28.5 77.0Z"/>
+      <path d="M23.5 67.2L12.5 74.7L25.5 72.0Z"/>
+      <path d="M22.4 61.4L9.4 66.7L23.4 66.5Z"/>
+      <path d="M22.4 55.4L11.0 58.0L22.4 60.6Z"/>
+      <path d="M23.4 49.5L11.0 49.7L22.4 54.6Z"/>
+      <path d="M25.5 44.0L12.5 41.3L23.5 48.8Z"/>
+      <path d="M28.5 39.0L15.6 33.3L25.6 43.3Z"/>
+      <path d="M32.3 34.7L22.4 28.3L28.6 38.4Z"/>
+      <path d="M36.8 31.3L27.9 22.4L32.5 34.2Z"/>
+      <path d="M41.8 29.0L34.5 17.7L37.0 30.9Z"/>
+      <path d="M47.2 27.7L41.9 14.5L42.1 28.7Z"/>
+      <path d="M52.6 27.6L50.0 16.0L47.4 27.6Z"/>
+      <path d="M57.9 28.7L57.8 16.0L52.8 27.7Z"/>
+      <path d="M63.0 30.9L65.5 17.7L58.2 29.0Z"/>
+      <path d="M67.5 34.2L73.0 21.1L63.2 31.3Z"/>
+      <path d="M71.4 38.4L77.6 28.3L67.7 34.7Z"/>
+      <path d="M74.4 43.3L83.1 34.2L71.5 39.0Z"/>
+      <path d="M76.5 48.8L87.5 41.3L74.5 44.0Z"/>
+      <path d="M77.6 54.6L90.6 49.3L76.6 49.5Z"/>
+
+  </g>
+  <g class="fuzz-mid" fill="#4a7a18" opacity="0.9">
+      <path d="M78.2 62.6L84.9 61.3L78.6 58.8Z"/>
+      <path d="M77.0 67.9L84.7 68.1L78.0 64.3Z"/>
+      <path d="M75.0 73.0L83.4 74.8L76.6 69.5Z"/>
+      <path d="M72.3 77.5L78.7 79.8L74.4 74.4Z"/>
+      <path d="M68.8 81.5L75.4 85.5L71.5 78.8Z"/>
+      <path d="M64.8 84.8L71.1 90.6L67.9 82.6Z"/>
+      <path d="M60.3 87.2L64.8 92.4L63.8 85.6Z"/>
+      <path d="M55.5 88.8L59.3 95.6L59.2 87.8Z"/>
+      <path d="M50.6 89.4L53.2 97.6L54.4 89.1Z"/>
+      <path d="M45.6 89.1L47.0 95.9L49.4 89.4Z"/>
+      <path d="M40.8 87.8L40.7 95.6L44.5 88.8Z"/>
+      <path d="M36.2 85.6L34.5 94.1L39.7 87.2Z"/>
+      <path d="M32.1 82.6L29.9 89.1L35.2 84.8Z"/>
+      <path d="M28.5 78.8L24.6 85.5L31.2 81.5Z"/>
+      <path d="M25.6 74.4L19.9 80.8L27.7 77.5Z"/>
+      <path d="M23.4 69.5L18.3 74.1L25.0 73.0Z"/>
+      <path d="M22.0 64.3L15.3 68.1L23.0 68.0Z"/>
+      <path d="M21.4 58.8L13.3 61.5L21.8 62.6Z"/>
+      <path d="M21.8 53.4L15.1 54.7L21.4 57.2Z"/>
+      <path d="M23.0 48.1L15.3 47.9L22.0 51.7Z"/>
+      <path d="M25.0 43.0L16.6 41.2L23.4 46.5Z"/>
+      <path d="M27.7 38.5L21.3 36.2L25.6 41.6Z"/>
+      <path d="M31.2 34.5L24.6 30.5L28.5 37.2Z"/>
+      <path d="M35.2 31.2L28.9 25.4L32.1 33.4Z"/>
+      <path d="M39.7 28.8L35.2 23.6L36.2 30.4Z"/>
+      <path d="M44.5 27.2L40.7 20.4L40.8 28.2Z"/>
+      <path d="M49.4 26.6L46.8 18.4L45.6 26.9Z"/>
+      <path d="M54.4 26.9L53.0 20.1L50.6 26.6Z"/>
+      <path d="M59.2 28.2L59.3 20.4L55.5 27.2Z"/>
+      <path d="M63.8 30.4L65.5 21.9L60.3 28.8Z"/>
+      <path d="M67.9 33.4L70.1 26.9L64.8 31.2Z"/>
+      <path d="M71.5 37.2L75.4 30.5L68.8 34.5Z"/>
+      <path d="M74.4 41.6L80.1 35.2L72.3 38.5Z"/>
+      <path d="M76.6 46.5L81.7 41.9L75.0 43.0Z"/>
+      <path d="M78.0 51.7L84.7 47.9L77.0 48.0Z"/>
+      <path d="M78.6 57.2L86.7 54.5L78.2 53.4Z"/>
+
+  </g>
+  <g class="mascot-body" filter="url(#m_shadow)">
+    <ellipse cx="50" cy="58" rx="30" ry="33" fill="url(#m_body)"/>
+    <g class="fuzz-front" fill="#5a9420" opacity="0.95">
+      <path d="M79.6 60.7L82.5 59.4L79.7 57.9Z"/>
+      <path d="M78.9 65.5L82.5 64.8L79.4 62.8Z"/>
+      <path d="M77.5 70.2L81.8 70.2L78.5 67.6Z"/>
+      <path d="M75.6 74.6L78.7 74.7L76.9 72.1Z"/>
+      <path d="M73.0 78.6L76.6 79.5L74.7 76.3Z"/>
+      <path d="M70.0 82.1L73.8 84.0L71.9 80.2Z"/>
+      <path d="M66.4 85.2L69.2 86.6L68.7 83.5Z"/>
+      <path d="M62.6 87.6L65.4 90.0L65.0 86.3Z"/>
+      <path d="M58.4 89.3L61.0 92.7L61.1 88.4Z"/>
+      <path d="M54.1 90.4L56.0 92.9L56.8 89.9Z"/>
+      <path d="M49.6 90.7L51.2 94.1L52.4 90.6Z"/>
+      <path d="M45.2 90.3L46.1 94.5L48.0 90.6Z"/>
+      <path d="M40.9 89.2L41.5 92.3L43.6 89.9Z"/>
+      <path d="M36.8 87.3L36.7 91.1L39.3 88.5Z"/>
+      <path d="M32.9 84.9L32.0 89.0L35.3 86.4Z"/>
+      <path d="M29.5 81.8L28.7 84.8L31.6 83.6Z"/>
+      <path d="M26.5 78.2L24.9 81.5L28.3 80.3Z"/>
+      <path d="M24.1 74.1L21.4 77.4L25.6 76.5Z"/>
+      <path d="M22.2 69.7L20.2 72.1L23.3 72.3Z"/>
+      <path d="M20.9 65.0L18.0 67.3L21.7 67.7Z"/>
+      <path d="M20.3 60.2L16.5 62.0L20.6 63.0Z"/>
+      <path d="M20.4 55.3L17.5 56.6L20.3 58.1Z"/>
+      <path d="M21.1 50.5L17.5 51.2L20.6 53.2Z"/>
+      <path d="M22.5 45.8L18.2 45.8L21.5 48.4Z"/>
+      <path d="M24.4 41.4L21.3 41.3L23.1 43.9Z"/>
+      <path d="M27.0 37.4L23.4 36.5L25.3 39.7Z"/>
+      <path d="M30.0 33.9L26.2 32.0L28.1 35.8Z"/>
+      <path d="M33.6 30.8L30.8 29.4L31.3 32.5Z"/>
+      <path d="M37.4 28.4L34.6 26.0L35.0 29.7Z"/>
+      <path d="M41.6 26.7L39.0 23.3L38.9 27.6Z"/>
+      <path d="M45.9 25.6L44.0 23.1L43.2 26.1Z"/>
+      <path d="M50.4 25.3L48.8 21.9L47.6 25.4Z"/>
+      <path d="M54.8 25.7L53.9 21.5L52.0 25.4Z"/>
+      <path d="M59.1 26.8L58.5 23.7L56.4 26.1Z"/>
+      <path d="M63.2 28.7L63.3 24.9L60.7 27.5Z"/>
+      <path d="M67.1 31.1L68.0 27.0L64.7 29.6Z"/>
+      <path d="M70.5 34.2L71.3 31.2L68.4 32.4Z"/>
+      <path d="M73.5 37.8L75.1 34.5L71.7 35.7Z"/>
+      <path d="M75.9 41.9L78.6 38.6L74.4 39.5Z"/>
+      <path d="M77.8 46.3L79.8 43.9L76.7 43.7Z"/>
+      <path d="M79.1 51.0L82.0 48.7L78.3 48.3Z"/>
+      <path d="M79.7 55.8L83.5 54.0L79.4 53.0Z"/>
+
+    </g>
+    <ellipse cx="38" cy="40" rx="20" ry="14" fill="url(#m_hl)"/>
+    <ellipse cx="32" cy="32" rx="2.6" ry="1.6" fill="rgba(255,255,255,0.65)"/>
+    <g class="mascot-arms">
+      <ellipse cx="22" cy="78" rx="6" ry="5" fill="#5a9420"/>
+      <ellipse cx="20" cy="76" rx="2" ry="1.3" fill="rgba(255,255,255,0.4)"/>
+      <ellipse cx="78" cy="78" rx="6" ry="5" fill="#5a9420"/>
+      <ellipse cx="80" cy="76" rx="2" ry="1.3" fill="rgba(255,255,255,0.4)"/>
+    </g>
+    <g class="mascot-eyes">
+      <ellipse cx="36" cy="58" rx="10" ry="12.5" fill="url(#m_eye)"/>
+      <ellipse cx="64" cy="58" rx="10" ry="12.5" fill="url(#m_eye)"/>
+      <ellipse class="pupil" cx="38" cy="60" rx="5.6" ry="7" fill="url(#m_iris)"/>
+      <ellipse class="pupil" cx="62" cy="60" rx="5.6" ry="7" fill="url(#m_iris)"/>
+      <ellipse cx="40" cy="56" rx="2.4" ry="3" fill="#fff"/>
+      <ellipse cx="64" cy="56" rx="2.4" ry="3" fill="#fff"/>
+      <circle cx="35" cy="63" r="0.9" fill="rgba(255,255,255,0.7)"/>
+      <circle cx="59" cy="63" r="0.9" fill="rgba(255,255,255,0.7)"/>
+    </g>
+    <path d="M 42 78 Q 50 84 58 78" stroke="#1a2e0b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="26" cy="72" rx="4" ry="2.4" fill="#ef8f8f" opacity="0.45"/>
+    <ellipse cx="74" cy="72" rx="4" ry="2.4" fill="#ef8f8f" opacity="0.45"/>
+    <ellipse cx="40" cy="92" rx="6.5" ry="2.8" fill="#3d6a14"/>
+    <ellipse cx="60" cy="92" rx="6.5" ry="2.8" fill="#3d6a14"/>
+  </g>
+  <g class="sparkles" fill="#A8DC4F">
+    <circle class="spark s1" cx="8" cy="10" r="1.6"/>
+    <circle class="spark s2" cx="92" cy="10" r="1.4"/>
+    <circle class="spark s3" cx="100" cy="55" r="1.5"/>
+    <circle class="spark s4" cx="0" cy="60" r="1.3"/>
+  </g>
+</svg></div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-card">
+          <div class="metric-ico">📋</div>
+          <div class="metric-info">
+            <div class="metric-num" id="d-total">—</div>
+            <div class="metric-cap">Total ADMs</div>
+            <div class="metric-trend up" id="d-total-trend"></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ico warn">⏳</div>
+          <div class="metric-info">
+            <div class="metric-num" id="d-pending">—</div>
+            <div class="metric-cap">Pending Review</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ico red">⚠</div>
+          <div class="metric-info">
+            <div class="metric-num" id="d-dispute">—</div>
+            <div class="metric-cap">To Dispute</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ico green">✓</div>
+          <div class="metric-info">
+            <div class="metric-num" id="d-accepted">—</div>
+            <div class="metric-cap">Accepted</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ico cyan">$</div>
+          <div class="metric-info">
+            <div class="metric-num" id="d-usd">—</div>
+            <div class="metric-cap">Total Disputed (USD)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-row">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">ADM Overview</div>
+            <select class="card-sel"><option>All time</option></select>
+          </div>
+          <div class="donut-wrap">
+            <div class="donut-canvas-wrap">
+              <canvas id="chart-dash-donut"></canvas>
+              <div class="donut-center"><div class="v" id="donut-total">0</div><div class="l">Total ADMs</div></div>
+            </div>
+            <div class="donut-legend" id="donut-legend"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">ADM Trend</div>
+            <select class="card-sel"><option>Last 14 days</option></select>
+          </div>
+          <div style="height:240px;position:relative"><canvas id="chart-dash-trend"></canvas></div>
+        </div>
+      </div>
+
+      <div class="spark-row">
+        <div class="spark-card">
+          <div class="spark-head"><div class="ico warn">⏳</div><div class="spark-title">Pending Review</div></div>
+          <div class="spark-num" id="sp-pending-num">—</div>
+          <div class="spark-sub" id="sp-pending-sub">Awaiting team action</div>
+          <div class="spark-canvas-wrap"><canvas id="sp-pending-canvas"></canvas></div>
+          <button class="spark-link" onclick="switchView('tracker')">View details →</button>
+        </div>
+        <div class="spark-card">
+          <div class="spark-head"><div class="ico red">⚠</div><div class="spark-title">To Dispute</div></div>
+          <div class="spark-num" id="sp-dispute-num">—</div>
+          <div class="spark-sub" id="sp-dispute-sub">Open dispute cases</div>
+          <div class="spark-canvas-wrap"><canvas id="sp-dispute-canvas"></canvas></div>
+          <button class="spark-link" onclick="switchView('tracker')">View details →</button>
+        </div>
+        <div class="spark-card">
+          <div class="spark-head"><div class="ico green">✓</div><div class="spark-title">Accepted</div></div>
+          <div class="spark-num" id="sp-accepted-num">—</div>
+          <div class="spark-sub" id="sp-accepted-sub">Resolved ADMs</div>
+          <div class="spark-canvas-wrap"><canvas id="sp-accepted-canvas"></canvas></div>
+          <button class="spark-link" onclick="switchView('tracker')">View details →</button>
+        </div>
+        <div class="spark-card">
+          <div class="spark-head"><div class="ico cyan">$</div><div class="spark-title">Awaiting Payment</div></div>
+          <div class="spark-num" id="sp-finance-num">—</div>
+          <div class="spark-sub" id="sp-finance-sub">Finance: Needs Review</div>
+          <div class="spark-canvas-wrap"><canvas id="sp-finance-canvas"></canvas></div>
+          <button class="spark-link" onclick="switchView('tracker')">View details →</button>
+        </div>
+      </div>
+
+      <div class="recent-card">
+        <div class="recent-card-head">
+          <div class="recent-title">Recent ADMs</div>
+          <button class="recent-link" onclick="switchView('tracker')">View all →</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Ticket No</th>
+              <th>Airline</th>
+              <th>Reason</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Received</th>
+            </tr>
+          </thead>
+          <tbody id="recent-adms-body">
+            <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ─── TRACKER VIEW ─── -->
+    <section class="view view-tracker view-pad">
+      <div class="toolbar" style="margin-bottom:20px;justify-content:flex-end">
+        <button class="btn btn-ghost btn-sm" onclick="openUploadModal()" style="color:var(--info);border-color:rgba(6,182,212,0.3)">⬆ Import File</button>
+        <button class="btn btn-primary" onclick="openModal()">+ Add ADM</button>
+      </div>
 
     <!-- ════════ TRACKER VIEW ════════ -->
     <div id="tracker-view">
@@ -385,6 +724,10 @@ textarea{resize:vertical;min-height:72px}
     </div>
     <!-- ════════ /TRACKER VIEW ════════ -->
 
+    </section>
+
+    <!-- ─── ANALYTICS VIEW ─── -->
+    <section class="view view-analytics view-pad">
     <!-- ════════ ANALYTICS VIEW ════════ -->
     <div id="analytics-view" style="display:none">
       <div class="summary-strip" id="analytics-summary"></div>
@@ -428,8 +771,32 @@ textarea{resize:vertical;min-height:72px}
   </div>
 </div>
 
-<!-- Toast container -->
-<div class="toast-wrap" id="toasts"></div>
+
+    </section>
+
+    <!-- ─── REASONS VIEW ─── -->
+    <section class="view view-reasons view-pad">
+      <h2 style="font-size:20px;margin-bottom:14px">Reasons</h2>
+      <div class="card" id="reasons-admin" style="display:flex;flex-direction:column;gap:6px">Loading…</div>
+    </section>
+
+    <!-- ─── TAXES VIEW ─── -->
+    <section class="view view-taxes view-pad">
+      <h2 style="font-size:20px;margin-bottom:14px">Tax codes</h2>
+      <div class="card" id="taxes-admin" style="display:flex;flex-direction:column;gap:6px">Loading…</div>
+    </section>
+
+    <!-- ─── SETTINGS VIEW ─── -->
+    <section class="view view-settings view-pad">
+      <h2 style="font-size:20px;margin-bottom:14px">Settings</h2>
+      <div class="card">
+        <p style="color:var(--muted);font-size:13px;line-height:1.7">Profile and admin settings are controlled by environment variables on the server.<br><br>To change the admin email, Gmail App Password, or session secret, update the env vars on Render and redeploy.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast-container"></div>
 
 <!-- Add/Edit Modal -->
 <div class="modal-bg" id="modal" style="display:none">
@@ -608,6 +975,8 @@ textarea{resize:vertical;min-height:72px}
     </div>
   </div>
 </div>
+
+
 
 <script>
 let allADMs = [];
@@ -1927,6 +2296,279 @@ function renderPaymentChart() {
         document.getElementById('analytics-view').style.display !== 'none') {
       renderAnalytics();
     }
+  };
+})();
+
+
+
+
+/* ════════ DASHBOARD VIEW ════════ */
+let _dashCharts = {};
+function calcDashMetrics(){
+  const all = allADMs || [];
+  const total = all.length;
+  const pending = all.filter(a=>a.status==='Pending').length;
+  const dispute = all.filter(a=>a.status==='Dispute').length;
+  const accepted = all.filter(a=>a.status==='Accepted').length;
+  const review = all.filter(a=>a.status==='Review').length;
+  const needsReview = all.filter(a=>a.finance==='Needs Review').length;
+  const totalUsdDisputed = all.filter(a=>a.status==='Dispute')
+    .reduce((s,a)=>s+(parseFloat(a.amount||0)||0),0);
+  // 7-day trend deltas vs prior week (simple count by createdAt date)
+  function inRange(a, from, to){
+    const t = new Date(a.received || a.createdAt || 0).getTime();
+    return t >= from && t < to;
+  }
+  const now = Date.now();
+  const day = 24*3600*1000;
+  const last7 = all.filter(a => inRange(a, now - 7*day, now)).length;
+  const prev7 = all.filter(a => inRange(a, now - 14*day, now - 7*day)).length;
+  const delta = (last7 - prev7);
+  const deltaPct = prev7 > 0 ? Math.round((delta/prev7)*1000)/10 : (last7>0?100:0);
+  return {total,pending,dispute,accepted,review,needsReview,totalUsdDisputed,deltaPct};
+}
+function fmtNum(n){ return (n||0).toLocaleString('en-US'); }
+function fmtUsd(n){ return '$' + Math.round(n||0).toLocaleString('en-US'); }
+function fmtTrend(pct){
+  if (pct == null || isNaN(pct)) return '';
+  const arrow = pct >= 0 ? '↑' : '↓';
+  return `${arrow} ${Math.abs(pct)}% vs last 7 days`;
+}
+
+function renderDashboard(){
+  const m = calcDashMetrics();
+  // Top row metrics
+  document.getElementById('d-total').textContent = fmtNum(m.total);
+  document.getElementById('d-pending').textContent = fmtNum(m.pending);
+  document.getElementById('d-dispute').textContent = fmtNum(m.dispute);
+  document.getElementById('d-accepted').textContent = fmtNum(m.accepted);
+  document.getElementById('d-usd').textContent = fmtUsd(m.totalUsdDisputed);
+  const trEl = document.getElementById('d-total-trend');
+  if (trEl){
+    trEl.textContent = fmtTrend(m.deltaPct);
+    trEl.classList.toggle('up', m.deltaPct >= 0);
+    trEl.classList.toggle('down', m.deltaPct < 0);
+  }
+  // Donut: status distribution
+  renderDonut();
+  // Trend: ADMs over time (per day, last 14)
+  renderTrendChart();
+  // 4 sparkline cards
+  renderSparkCards(m);
+  // Recent ADMs table (latest 5)
+  renderRecentADMs();
+}
+
+function renderDonut(){
+  const ctx = document.getElementById('chart-dash-donut');
+  if (!ctx) return;
+  const labels = ['Pending','Dispute','Accepted','Review'];
+  const colors = ['#f59e0b','#ef4444','#7DBC2A','#6366f1'];
+  const data = labels.map(s => (allADMs||[]).filter(a=>a.status===s).length);
+  const total = data.reduce((s,n)=>s+n,0);
+  if (_dashCharts.donut) _dashCharts.donut.destroy();
+  _dashCharts.donut = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels, datasets:[{data, backgroundColor:colors, borderWidth:0, hoverOffset:6}]},
+    options:{cutout:'66%', plugins:{legend:{display:false}, tooltip:{enabled:true}}, responsive:true, maintainAspectRatio:false}
+  });
+  // Legend rows
+  const legend = document.getElementById('donut-legend');
+  if (legend){
+    legend.innerHTML = labels.map((l,i)=>{
+      const v = data[i]; const pct = total>0 ? ((v/total)*100).toFixed(1) : 0;
+      return `<div class="legend-row"><div class="l"><span class="dot" style="background:${colors[i]}"></span>${l}</div><div class="v">${v} (${pct}%)</div></div>`;
+    }).join('');
+  }
+  const tEl = document.getElementById('donut-total');
+  if (tEl) tEl.textContent = fmtNum(total);
+}
+
+function renderTrendChart(){
+  const ctx = document.getElementById('chart-dash-trend');
+  if (!ctx) return;
+  const days = 14;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const labels = []; const byStatus = {Pending:[],Dispute:[],Accepted:[],Review:[]};
+  for (let i = days-1; i >= 0; i--){
+    const d = new Date(today.getTime() - i*86400000);
+    labels.push(d.toLocaleDateString('en-US',{month:'short', day:'numeric'}));
+    for (const s of Object.keys(byStatus)){
+      const cnt = (allADMs||[]).filter(a => {
+        if (a.status !== s) return false;
+        const t = new Date(a.received||a.createdAt||0);
+        return t.getFullYear()===d.getFullYear() && t.getMonth()===d.getMonth() && t.getDate()===d.getDate();
+      }).length;
+      byStatus[s].push(cnt);
+    }
+  }
+  const colors = {Pending:'#f59e0b',Dispute:'#ef4444',Accepted:'#7DBC2A',Review:'#6366f1'};
+  if (_dashCharts.trend) _dashCharts.trend.destroy();
+  _dashCharts.trend = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels,
+      datasets: Object.keys(byStatus).map(s => ({
+        label:s, data:byStatus[s], borderColor:colors[s],
+        backgroundColor:colors[s]+'20', tension:0.35, fill:false,
+        pointRadius:2.5, pointHoverRadius:5, borderWidth:2
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}},
+      scales:{
+        y:{beginAtZero:true, ticks:{font:{size:11}, color:'#6b7a6b'}, grid:{color:'rgba(0,0,0,0.04)'}},
+        x:{ticks:{font:{size:10}, color:'#6b7a6b'}, grid:{display:false}}
+      }
+    }
+  });
+}
+
+function renderSparkCards(m){
+  const cards = [
+    {id:'pending',   label:'Pending Review',  num:m.pending,     sub:'Awaiting team action',           color:'#f59e0b'},
+    {id:'dispute',   label:'To Dispute',      num:m.dispute,     sub:'Open dispute cases',             color:'#ef4444'},
+    {id:'accepted',  label:'Accepted',        num:m.accepted,    sub:'Resolved ADMs',                  color:'#7DBC2A'},
+    {id:'finance',   label:'Awaiting Payment',num:m.needsReview, sub:'Finance status: Needs Review',   color:'#06b6d4'}
+  ];
+  cards.forEach(c => {
+    document.getElementById(`sp-${c.id}-num`).textContent = fmtNum(c.num);
+    document.getElementById(`sp-${c.id}-sub`).textContent = c.sub;
+    const cv = document.getElementById(`sp-${c.id}-canvas`);
+    if (!cv) return;
+    if (_dashCharts['sp-'+c.id]) _dashCharts['sp-'+c.id].destroy();
+    // Sparkline: last 14 days count of ADMs in this status
+    const today = new Date(); today.setHours(0,0,0,0);
+    const pts = [];
+    for (let i = 13; i >= 0; i--){
+      const d = new Date(today.getTime() - i*86400000);
+      const cnt = (allADMs||[]).filter(a => {
+        const matchStatus = c.id==='finance' ? a.finance==='Needs Review' :
+                            c.id==='pending'  ? a.status==='Pending' :
+                            c.id==='dispute'  ? a.status==='Dispute' :
+                                                a.status==='Accepted';
+        if (!matchStatus) return false;
+        const t = new Date(a.received||a.createdAt||0);
+        return t.getFullYear()===d.getFullYear() && t.getMonth()===d.getMonth() && t.getDate()===d.getDate();
+      }).length;
+      pts.push(cnt);
+    }
+    _dashCharts['sp-'+c.id] = new Chart(cv, {
+      type:'line',
+      data:{labels:pts.map(()=>''), datasets:[{data:pts, borderColor:c.color, backgroundColor:c.color+'30', tension:0.4, fill:true, pointRadius:0, borderWidth:2}]},
+      options:{responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}, tooltip:{enabled:false}},
+        scales:{y:{display:false, beginAtZero:true}, x:{display:false}}
+      }
+    });
+  });
+}
+
+function renderRecentADMs(){
+  const tbody = document.getElementById('recent-adms-body');
+  if (!tbody) return;
+  const list = [...(allADMs||[])].sort((a,b)=>{
+    return new Date(b.received||b.createdAt||0) - new Date(a.received||a.createdAt||0);
+  }).slice(0, 6);
+  if (!list.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">No ADMs yet — add your first one to populate this dashboard.</td></tr>';
+    return;
+  }
+  const statusClass = s => ({Dispute:'badge-dispute',Accepted:'badge-accepted',Pending:'badge-pending',Review:'badge-review'}[s] || 'badge-pending');
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  tbody.innerHTML = list.map(a => `
+    <tr>
+      <td class="mono">${esc(a.ticket || '—')}</td>
+      <td>${esc(a.airline || '—')}</td>
+      <td>${esc(a.reason || '—')}</td>
+      <td class="amount">${a.amount ? parseFloat(a.amount).toLocaleString('en-US',{minimumFractionDigits:2}) + ' ' + esc(a.currency||'USD') : '—'}</td>
+      <td><span class="badge ${statusClass(a.status)}">${esc(a.status || 'Pending')}</span></td>
+      <td class="mono" style="color:var(--muted)">${a.received ? new Date(a.received).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+    </tr>`).join('');
+}
+
+/* ════════ View switching ════════ */
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const target = document.querySelector('.view-' + name);
+  if (target) target.classList.add('active');
+  const nav = document.querySelector('.nav-item[data-view="' + name + '"]');
+  if (nav) nav.classList.add('active');
+  document.getElementById('topbar-section').textContent = ({
+    dashboard:'Dashboard', tracker:'ADMs', analytics:'Analytics',
+    reasons:'Reasons', taxes:'Taxes', settings:'Settings'
+  })[name] || 'Dashboard';
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'analytics') renderAnalytics && renderAnalytics();
+  if (name === 'reasons') renderReasonsAdmin && renderReasonsAdmin();
+  if (name === 'taxes') renderTaxesAdmin && renderTaxesAdmin();
+}
+
+function renderReasonsAdmin(){
+  const wrap = document.getElementById('reasons-admin');
+  if (!wrap) return;
+  wrap.innerHTML = (allReasons||[]).map((r,i)=>`
+    <div class="admin-row"><span>${r}</span></div>
+  `).join('') + `
+    <div style="margin-top:14px"><button class="btn btn-primary btn-sm" onclick="promptAddReason()">+ Add new reason</button></div>`;
+}
+function renderTaxesAdmin(){
+  const wrap = document.getElementById('taxes-admin');
+  if (!wrap) return;
+  wrap.innerHTML = (allTaxes||[]).map(t=>`
+    <div class="admin-row"><span class="mono"><b>${t.code}</b> &nbsp; ${t.description||''}</span></div>
+  `).join('') + `
+    <div style="margin-top:14px"><button class="btn btn-primary btn-sm" onclick="promptAddTax()">+ Add new tax code</button></div>`;
+}
+
+// Re-render dashboard whenever data refreshes
+const _origRefresh = (window.refreshData || (()=>{}));
+async function refreshAfterData(){
+  if (document.querySelector('.view-dashboard.active')) renderDashboard();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  // Hook initial nav clicks
+  document.querySelectorAll('.nav-item[data-view]').forEach(n => {
+    n.addEventListener('click', e => { e.preventDefault(); switchView(n.dataset.view); });
+  });
+});
+
+
+
+// ── Hook: re-render dashboard after data refresh ──
+(function(){
+  if (typeof loadADMs !== 'function') return;
+  const _orig = loadADMs;
+  loadADMs = async function(){
+    await _orig.apply(this, arguments);
+    if (document.querySelector('.view-dashboard.active')) renderDashboard();
+  };
+})();
+
+// ── User info in sidebar ──
+async function loadUser(){
+  try {
+    const r = await fetch('/api/me', { credentials: 'include' });
+    const data = await r.json();
+    if (data && data.user) {
+      const n = data.user.name || data.user.email || 'User';
+      const ne = document.getElementById('user-name');
+      const ee = document.getElementById('user-email');
+      const ae = document.getElementById('user-avatar');
+      if (ne) ne.textContent = n;
+      if (ee) ee.textContent = data.user.email || '';
+      if (ae) ae.textContent = (n.charAt(0) || '?').toUpperCase();
+    }
+  } catch (e) {}
+}
+
+(function(){
+  const _origOnload = window.onload;
+  window.onload = function(){
+    if (typeof _origOnload === 'function') _origOnload();
+    loadUser();
   };
 })();
 

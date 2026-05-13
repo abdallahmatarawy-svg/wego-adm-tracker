@@ -53,7 +53,7 @@
     background:rgba(125,188,42,.35);border-radius:50%;animation:float-up 14s linear infinite}
   @keyframes float-up{from{transform:translateY(110vh) translateX(0);opacity:0}
     10%{opacity:1}90%{opacity:1}to{transform:translateY(-15vh) translateX(40px);opacity:0}}
-  .mascot-3d{width:120px;height:120px;margin:0 auto 12px;display:block;
+  .mascot-3d{width:160px;height:160px;margin:0 auto 12px;display:block;
     filter:drop-shadow(0 12px 28px rgba(125,188,42,.30));perspective:600px}
   .wego-mascot-svg{width:100%;height:100%;display:block;overflow:visible;
     transform-origin:50% 90%;animation:wego-float 4s ease-in-out infinite}
@@ -93,59 +93,201 @@
 
 <div class="card">
   <div class="mascot-3d">
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="wego-mascot-svg">
-    <defs>
-      <radialGradient id="bodyGrad" cx="40%" cy="35%" r="65%">
-        <stop offset="0%" stop-color="#C8F08A"/><stop offset="35%" stop-color="#A8DC4F"/>
-        <stop offset="70%" stop-color="#7DBC2A"/><stop offset="100%" stop-color="#3d6a14"/>
-      </radialGradient>
-      <radialGradient id="hl" cx="35%" cy="30%" r="25%">
-        <stop offset="0%" stop-color="rgba(255,255,255,0.85)"/>
-        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-      </radialGradient>
-      <radialGradient id="eyeGrad" cx="40%" cy="40%" r="60%">
-        <stop offset="0%" stop-color="#fff"/><stop offset="80%" stop-color="#f0f0f0"/>
-        <stop offset="100%" stop-color="#d0d0d0"/>
-      </radialGradient>
-      <filter id="softShadow" x="-20%" y="-10%" width="140%" height="130%">
-        <feGaussianBlur in="SourceAlpha" stdDeviation="2.5"/><feOffset dx="0" dy="3"/>
-        <feComponentTransfer><feFuncA type="linear" slope="0.4"/></feComponentTransfer>
-        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-    </defs>
-    <ellipse class="mascot-shadow" cx="50" cy="92" rx="22" ry="3" fill="rgba(0,0,0,0.18)"/>
-    <g class="fuzz-back" fill="#5a9420" opacity="0.85">
-      <circle cx="14" cy="32" r="4"/><circle cx="86" cy="32" r="4"/>
-      <circle cx="10" cy="55" r="3.5"/><circle cx="90" cy="55" r="3.5"/>
-      <circle cx="22" cy="14" r="3"/><circle cx="78" cy="14" r="3"/>
-      <circle cx="50" cy="6" r="3"/><circle cx="32" cy="78" r="3.2"/><circle cx="68" cy="78" r="3.2"/>
+  <svg viewBox="-12 -28 124 138" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="wego-mascot-svg">
+  <defs>
+    <radialGradient id="m_body" cx="38%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="#D8F896"/>
+      <stop offset="22%" stop-color="#B8E866"/>
+      <stop offset="50%" stop-color="#8FC93A"/>
+      <stop offset="80%" stop-color="#5a9420"/>
+      <stop offset="100%" stop-color="#2d4e0a"/>
+    </radialGradient>
+    <radialGradient id="m_hl" cx="32%" cy="22%" r="38%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.95)"/>
+      <stop offset="55%" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+    <radialGradient id="m_eye" cx="38%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="78%" stop-color="#f3f3f3"/>
+      <stop offset="100%" stop-color="#c0c0c0"/>
+    </radialGradient>
+    <radialGradient id="m_iris" cx="40%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#3a5d18"/>
+      <stop offset="60%" stop-color="#1a2e0b"/>
+      <stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="m_ant" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#C8F08A"/>
+      <stop offset="100%" stop-color="#5a9420"/>
+    </radialGradient>
+    <filter id="m_shadow" x="-30%" y="-10%" width="160%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/><feOffset dy="3"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <ellipse class="mascot-shadow" cx="50" cy="98" rx="28" ry="3.4" fill="rgba(0,0,0,0.22)"/>
+  <g class="mascot-antennae">
+    <path d="M 34 26 Q 22 12 26 -18" stroke="#4a7a18" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="26" cy="-19" r="4.2" fill="url(#m_ant)"/>
+    <circle cx="24.5" cy="-21" r="1.2" fill="rgba(255,255,255,0.7)"/>
+    <path d="M 66 26 Q 78 12 74 -18" stroke="#4a7a18" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="74" cy="-19" r="4.2" fill="url(#m_ant)"/>
+    <circle cx="72.5" cy="-21" r="1.2" fill="rgba(255,255,255,0.7)"/>
+  </g>
+  <g class="fuzz-back" fill="#3d6a14" opacity="0.95">
+      <path d="M77.6 60.6L89.0 58.0L77.6 55.4Z"/>
+      <path d="M76.6 66.5L89.0 66.3L77.6 61.4Z"/>
+      <path d="M74.5 72.0L87.5 74.7L76.5 67.2Z"/>
+      <path d="M71.5 77.0L84.4 82.7L74.4 72.7Z"/>
+      <path d="M67.7 81.3L77.6 87.7L71.4 77.6Z"/>
+      <path d="M63.2 84.7L72.1 93.6L67.5 81.8Z"/>
+      <path d="M58.2 87.0L65.5 98.3L63.0 85.1Z"/>
+      <path d="M52.8 88.3L58.1 101.5L57.9 87.3Z"/>
+      <path d="M47.4 88.4L50.0 100.0L52.6 88.4Z"/>
+      <path d="M42.1 87.3L42.2 100.0L47.2 88.3Z"/>
+      <path d="M37.0 85.1L34.5 98.3L41.8 87.0Z"/>
+      <path d="M32.5 81.8L27.0 94.9L36.8 84.7Z"/>
+      <path d="M28.6 77.6L22.4 87.7L32.3 81.3Z"/>
+      <path d="M25.6 72.7L16.9 81.8L28.5 77.0Z"/>
+      <path d="M23.5 67.2L12.5 74.7L25.5 72.0Z"/>
+      <path d="M22.4 61.4L9.4 66.7L23.4 66.5Z"/>
+      <path d="M22.4 55.4L11.0 58.0L22.4 60.6Z"/>
+      <path d="M23.4 49.5L11.0 49.7L22.4 54.6Z"/>
+      <path d="M25.5 44.0L12.5 41.3L23.5 48.8Z"/>
+      <path d="M28.5 39.0L15.6 33.3L25.6 43.3Z"/>
+      <path d="M32.3 34.7L22.4 28.3L28.6 38.4Z"/>
+      <path d="M36.8 31.3L27.9 22.4L32.5 34.2Z"/>
+      <path d="M41.8 29.0L34.5 17.7L37.0 30.9Z"/>
+      <path d="M47.2 27.7L41.9 14.5L42.1 28.7Z"/>
+      <path d="M52.6 27.6L50.0 16.0L47.4 27.6Z"/>
+      <path d="M57.9 28.7L57.8 16.0L52.8 27.7Z"/>
+      <path d="M63.0 30.9L65.5 17.7L58.2 29.0Z"/>
+      <path d="M67.5 34.2L73.0 21.1L63.2 31.3Z"/>
+      <path d="M71.4 38.4L77.6 28.3L67.7 34.7Z"/>
+      <path d="M74.4 43.3L83.1 34.2L71.5 39.0Z"/>
+      <path d="M76.5 48.8L87.5 41.3L74.5 44.0Z"/>
+      <path d="M77.6 54.6L90.6 49.3L76.6 49.5Z"/>
+
+  </g>
+  <g class="fuzz-mid" fill="#4a7a18" opacity="0.9">
+      <path d="M78.2 62.6L84.9 61.3L78.6 58.8Z"/>
+      <path d="M77.0 67.9L84.7 68.1L78.0 64.3Z"/>
+      <path d="M75.0 73.0L83.4 74.8L76.6 69.5Z"/>
+      <path d="M72.3 77.5L78.7 79.8L74.4 74.4Z"/>
+      <path d="M68.8 81.5L75.4 85.5L71.5 78.8Z"/>
+      <path d="M64.8 84.8L71.1 90.6L67.9 82.6Z"/>
+      <path d="M60.3 87.2L64.8 92.4L63.8 85.6Z"/>
+      <path d="M55.5 88.8L59.3 95.6L59.2 87.8Z"/>
+      <path d="M50.6 89.4L53.2 97.6L54.4 89.1Z"/>
+      <path d="M45.6 89.1L47.0 95.9L49.4 89.4Z"/>
+      <path d="M40.8 87.8L40.7 95.6L44.5 88.8Z"/>
+      <path d="M36.2 85.6L34.5 94.1L39.7 87.2Z"/>
+      <path d="M32.1 82.6L29.9 89.1L35.2 84.8Z"/>
+      <path d="M28.5 78.8L24.6 85.5L31.2 81.5Z"/>
+      <path d="M25.6 74.4L19.9 80.8L27.7 77.5Z"/>
+      <path d="M23.4 69.5L18.3 74.1L25.0 73.0Z"/>
+      <path d="M22.0 64.3L15.3 68.1L23.0 68.0Z"/>
+      <path d="M21.4 58.8L13.3 61.5L21.8 62.6Z"/>
+      <path d="M21.8 53.4L15.1 54.7L21.4 57.2Z"/>
+      <path d="M23.0 48.1L15.3 47.9L22.0 51.7Z"/>
+      <path d="M25.0 43.0L16.6 41.2L23.4 46.5Z"/>
+      <path d="M27.7 38.5L21.3 36.2L25.6 41.6Z"/>
+      <path d="M31.2 34.5L24.6 30.5L28.5 37.2Z"/>
+      <path d="M35.2 31.2L28.9 25.4L32.1 33.4Z"/>
+      <path d="M39.7 28.8L35.2 23.6L36.2 30.4Z"/>
+      <path d="M44.5 27.2L40.7 20.4L40.8 28.2Z"/>
+      <path d="M49.4 26.6L46.8 18.4L45.6 26.9Z"/>
+      <path d="M54.4 26.9L53.0 20.1L50.6 26.6Z"/>
+      <path d="M59.2 28.2L59.3 20.4L55.5 27.2Z"/>
+      <path d="M63.8 30.4L65.5 21.9L60.3 28.8Z"/>
+      <path d="M67.9 33.4L70.1 26.9L64.8 31.2Z"/>
+      <path d="M71.5 37.2L75.4 30.5L68.8 34.5Z"/>
+      <path d="M74.4 41.6L80.1 35.2L72.3 38.5Z"/>
+      <path d="M76.6 46.5L81.7 41.9L75.0 43.0Z"/>
+      <path d="M78.0 51.7L84.7 47.9L77.0 48.0Z"/>
+      <path d="M78.6 57.2L86.7 54.5L78.2 53.4Z"/>
+
+  </g>
+  <g class="mascot-body" filter="url(#m_shadow)">
+    <ellipse cx="50" cy="58" rx="30" ry="33" fill="url(#m_body)"/>
+    <g class="fuzz-front" fill="#5a9420" opacity="0.95">
+      <path d="M79.6 60.7L82.5 59.4L79.7 57.9Z"/>
+      <path d="M78.9 65.5L82.5 64.8L79.4 62.8Z"/>
+      <path d="M77.5 70.2L81.8 70.2L78.5 67.6Z"/>
+      <path d="M75.6 74.6L78.7 74.7L76.9 72.1Z"/>
+      <path d="M73.0 78.6L76.6 79.5L74.7 76.3Z"/>
+      <path d="M70.0 82.1L73.8 84.0L71.9 80.2Z"/>
+      <path d="M66.4 85.2L69.2 86.6L68.7 83.5Z"/>
+      <path d="M62.6 87.6L65.4 90.0L65.0 86.3Z"/>
+      <path d="M58.4 89.3L61.0 92.7L61.1 88.4Z"/>
+      <path d="M54.1 90.4L56.0 92.9L56.8 89.9Z"/>
+      <path d="M49.6 90.7L51.2 94.1L52.4 90.6Z"/>
+      <path d="M45.2 90.3L46.1 94.5L48.0 90.6Z"/>
+      <path d="M40.9 89.2L41.5 92.3L43.6 89.9Z"/>
+      <path d="M36.8 87.3L36.7 91.1L39.3 88.5Z"/>
+      <path d="M32.9 84.9L32.0 89.0L35.3 86.4Z"/>
+      <path d="M29.5 81.8L28.7 84.8L31.6 83.6Z"/>
+      <path d="M26.5 78.2L24.9 81.5L28.3 80.3Z"/>
+      <path d="M24.1 74.1L21.4 77.4L25.6 76.5Z"/>
+      <path d="M22.2 69.7L20.2 72.1L23.3 72.3Z"/>
+      <path d="M20.9 65.0L18.0 67.3L21.7 67.7Z"/>
+      <path d="M20.3 60.2L16.5 62.0L20.6 63.0Z"/>
+      <path d="M20.4 55.3L17.5 56.6L20.3 58.1Z"/>
+      <path d="M21.1 50.5L17.5 51.2L20.6 53.2Z"/>
+      <path d="M22.5 45.8L18.2 45.8L21.5 48.4Z"/>
+      <path d="M24.4 41.4L21.3 41.3L23.1 43.9Z"/>
+      <path d="M27.0 37.4L23.4 36.5L25.3 39.7Z"/>
+      <path d="M30.0 33.9L26.2 32.0L28.1 35.8Z"/>
+      <path d="M33.6 30.8L30.8 29.4L31.3 32.5Z"/>
+      <path d="M37.4 28.4L34.6 26.0L35.0 29.7Z"/>
+      <path d="M41.6 26.7L39.0 23.3L38.9 27.6Z"/>
+      <path d="M45.9 25.6L44.0 23.1L43.2 26.1Z"/>
+      <path d="M50.4 25.3L48.8 21.9L47.6 25.4Z"/>
+      <path d="M54.8 25.7L53.9 21.5L52.0 25.4Z"/>
+      <path d="M59.1 26.8L58.5 23.7L56.4 26.1Z"/>
+      <path d="M63.2 28.7L63.3 24.9L60.7 27.5Z"/>
+      <path d="M67.1 31.1L68.0 27.0L64.7 29.6Z"/>
+      <path d="M70.5 34.2L71.3 31.2L68.4 32.4Z"/>
+      <path d="M73.5 37.8L75.1 34.5L71.7 35.7Z"/>
+      <path d="M75.9 41.9L78.6 38.6L74.4 39.5Z"/>
+      <path d="M77.8 46.3L79.8 43.9L76.7 43.7Z"/>
+      <path d="M79.1 51.0L82.0 48.7L78.3 48.3Z"/>
+      <path d="M79.7 55.8L83.5 54.0L79.4 53.0Z"/>
+
     </g>
-    <g class="mascot-body" filter="url(#softShadow)">
-      <ellipse cx="50" cy="52" rx="32" ry="35" fill="url(#bodyGrad)"/>
-      <ellipse cx="38" cy="36" rx="18" ry="14" fill="url(#hl)"/>
-      <ellipse cx="32" cy="28" rx="3" ry="2" fill="rgba(255,255,255,0.6)"/>
-      <g class="mascot-eyes">
-        <ellipse cx="38" cy="48" rx="6" ry="7.5" fill="url(#eyeGrad)"/>
-        <ellipse cx="62" cy="48" rx="6" ry="7.5" fill="url(#eyeGrad)"/>
-        <circle class="pupil" cx="39" cy="49" r="3" fill="#1a2e0b"/>
-        <circle class="pupil" cx="63" cy="49" r="3" fill="#1a2e0b"/>
-        <circle cx="40" cy="47.5" r="1.1" fill="#fff"/>
-        <circle cx="64" cy="47.5" r="1.1" fill="#fff"/>
-      </g>
-      <path d="M40 64 Q50 72 60 64" stroke="#1a2e0b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      <path d="M44 65 Q50 70 56 65 Q50 72 44 65 Z" fill="#a83c5e" opacity="0.7"/>
-      <ellipse cx="29" cy="60" rx="4" ry="2.4" fill="#ef8f8f" opacity="0.55"/>
-      <ellipse cx="71" cy="60" rx="4" ry="2.4" fill="#ef8f8f" opacity="0.55"/>
-      <ellipse cx="38" cy="86" rx="6" ry="3" fill="#3d6a14"/>
-      <ellipse cx="62" cy="86" rx="6" ry="3" fill="#3d6a14"/>
+    <ellipse cx="38" cy="40" rx="20" ry="14" fill="url(#m_hl)"/>
+    <ellipse cx="32" cy="32" rx="2.6" ry="1.6" fill="rgba(255,255,255,0.65)"/>
+    <g class="mascot-arms">
+      <ellipse cx="22" cy="78" rx="6" ry="5" fill="#5a9420"/>
+      <ellipse cx="20" cy="76" rx="2" ry="1.3" fill="rgba(255,255,255,0.4)"/>
+      <ellipse cx="78" cy="78" rx="6" ry="5" fill="#5a9420"/>
+      <ellipse cx="80" cy="76" rx="2" ry="1.3" fill="rgba(255,255,255,0.4)"/>
     </g>
-    <g class="sparkles" fill="#7DBC2A">
-      <circle class="spark s1" cx="15" cy="20" r="1.6"/>
-      <circle class="spark s2" cx="85" cy="20" r="1.4"/>
-      <circle class="spark s3" cx="90" cy="65" r="1.5"/>
-      <circle class="spark s4" cx="10" cy="68" r="1.3"/>
+    <g class="mascot-eyes">
+      <ellipse cx="36" cy="58" rx="10" ry="12.5" fill="url(#m_eye)"/>
+      <ellipse cx="64" cy="58" rx="10" ry="12.5" fill="url(#m_eye)"/>
+      <ellipse class="pupil" cx="38" cy="60" rx="5.6" ry="7" fill="url(#m_iris)"/>
+      <ellipse class="pupil" cx="62" cy="60" rx="5.6" ry="7" fill="url(#m_iris)"/>
+      <ellipse cx="40" cy="56" rx="2.4" ry="3" fill="#fff"/>
+      <ellipse cx="64" cy="56" rx="2.4" ry="3" fill="#fff"/>
+      <circle cx="35" cy="63" r="0.9" fill="rgba(255,255,255,0.7)"/>
+      <circle cx="59" cy="63" r="0.9" fill="rgba(255,255,255,0.7)"/>
     </g>
-  </svg>
+    <path d="M 42 78 Q 50 84 58 78" stroke="#1a2e0b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="26" cy="72" rx="4" ry="2.4" fill="#ef8f8f" opacity="0.45"/>
+    <ellipse cx="74" cy="72" rx="4" ry="2.4" fill="#ef8f8f" opacity="0.45"/>
+    <ellipse cx="40" cy="92" rx="6.5" ry="2.8" fill="#3d6a14"/>
+    <ellipse cx="60" cy="92" rx="6.5" ry="2.8" fill="#3d6a14"/>
+  </g>
+  <g class="sparkles" fill="#A8DC4F">
+    <circle class="spark s1" cx="8" cy="10" r="1.6"/>
+    <circle class="spark s2" cx="92" cy="10" r="1.4"/>
+    <circle class="spark s3" cx="100" cy="55" r="1.5"/>
+    <circle class="spark s4" cx="0" cy="60" r="1.3"/>
+  </g>
+</svg>
 </div>
 
   <div class="brand"><span class="wego-badge">wego<sup style="font-size:18px;top:0">.</sup></span><span class="brand-sub">/ ADM Tracker</span></div>
