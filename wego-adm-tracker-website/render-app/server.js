@@ -18,6 +18,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'abdallah.matarawy@wego.com';
 const APP_NAME   = 'ADM Tracker';
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const DATA_FILE  = process.env.DATA_FILE || path.join(__dirname, 'data.json');
+const INITIAL_ADMIN_HASH = '4bcee5a547d564e64dd99bed08ef7d76:b81c2dccfd31b385ecac44edab355fdfe480f96a2638feb2adc4bbb037f0d812aefb9e181597658171ddcdfcc089bf218e0388b93b691c1cfff1de29c1469d97'; // scrypt hash of the seeded admin password — change via /reset-password after first sign-in
 
 // ── Persistent JSON store ──────────────────────────────────────────────
 function loadDB() {
@@ -58,7 +59,7 @@ function saveDB() {
       id: crypto.randomBytes(8).toString('hex'),
       email: ADMIN_EMAIL.toLowerCase(),
       name: 'Admin',
-      passwordHash: '',         // admin must use "set password" link first time
+      passwordHash: INITIAL_ADMIN_HASH,
       status: 'approved',
       isAdmin: true,
       createdAt: new Date().toISOString(),
@@ -66,6 +67,10 @@ function saveDB() {
     });
     saveDB();
     console.log('[boot] seeded admin user:', ADMIN_EMAIL);
+  } else if (!admin.passwordHash) {
+    admin.passwordHash = INITIAL_ADMIN_HASH;
+    saveDB();
+    console.log('[boot] backfilled initial password for admin:', ADMIN_EMAIL);
   }
 })();
 
@@ -208,6 +213,58 @@ app.get('/api/me', (req, res) => {
   const u = getUser(req);
   if (!u) return res.json({ user: null });
   res.json({ user: { email: u.email, name: u.name, status: u.status, isAdmin: !!u.isAdmin } });
+});
+
+
+// ── Password reset ─────────────────────────────────────────────────────
+app.post('/api/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const e = String(email).trim().toLowerCase();
+    const u = db.users.find(x => x.email === e);
+    // Always respond OK to avoid leaking which emails are registered.
+    if (u && u.status === 'approved') {
+      u.resetToken = crypto.randomBytes(24).toString('hex');
+      u.resetExpiry = Date.now() + 60 * 60 * 1000; // 1 hour
+      saveDB();
+      const base = req.protocol + '://' + req.get('host');
+      const resetUrl = `${base}/reset-password?id=${u.id}&token=${u.resetToken}`;
+      const html =
+        `<div style="font-family:Arial,sans-serif;max-width:560px">` +
+          `<div style="background:#7DBC2A;color:#fff;padding:14px 20px;border-radius:10px 10px 0 0"><b>wego</b> / ${APP_NAME}</div>` +
+          `<div style="border:1px solid #eee;border-top:none;padding:24px;border-radius:0 0 10px 10px">` +
+            `<h2 style="margin:0 0 12px;font-size:18px">Password reset</h2>` +
+            `<p style="font-size:14px;color:#333">Hi ${escapeHtml(u.name || '')},</p>` +
+            `<p style="font-size:14px;color:#333">Click the button below to set a new password for ${APP_NAME}. This link expires in 1 hour.</p>` +
+            `<div style="margin:24px 0">` +
+              `<a href="${resetUrl}" style="background:#7DBC2A;color:#fff;padding:11px 22px;border-radius:8px;text-decoration:none;font-weight:600">Set new password</a>` +
+            `</div>` +
+            `<p style="font-size:12px;color:#888">If you didn't request this, you can safely ignore this email.</p>` +
+          `</div></div>`;
+      sendMail(u.email, `Password reset · ${APP_NAME}`, html);
+    }
+    res.json({ ok: true });
+  } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+});
+
+app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'public', 'reset-password.html')));
+
+app.post('/api/reset-password', async (req, res) => {
+  try {
+    const { id, token, password } = req.body || {};
+    if (!id || !token || !password) return res.status(400).json({ error: 'Missing fields' });
+    if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    const u = db.users.find(x => x.id === id);
+    if (!u || !u.resetToken || u.resetToken !== token || !u.resetExpiry || u.resetExpiry < Date.now()) {
+      return res.status(400).json({ error: 'Invalid or expired reset link. Please request a new one.' });
+    }
+    u.passwordHash = hashPassword(password);
+    delete u.resetToken;
+    delete u.resetExpiry;
+    saveDB();
+    res.json({ ok: true });
+  } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
 });
 
 // ── Admin approve/reject (clicked from email) ──────────────────────────
