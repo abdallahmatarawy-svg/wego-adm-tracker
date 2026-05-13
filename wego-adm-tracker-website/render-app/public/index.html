@@ -321,12 +321,12 @@ table.parsed-table th{font-size:10px;font-weight:600;color:var(--muted);text-tra
       <span>ADM</span>
     </div>
     <nav class="nav">
-      <button class="nav-item active" data-view="dashboard"><span class="nav-ico">▦</span><span>Dashboard</span></button>
-      <button class="nav-item" data-view="tracker"><span class="nav-ico">▤</span><span>ADMs</span></button>
-      <button class="nav-item" data-view="analytics"><span class="nav-ico">⌭</span><span>Analytics</span></button>
-      <button class="nav-item" data-view="reasons"><span class="nav-ico">◉</span><span>Reasons</span></button>
-      <button class="nav-item" data-view="taxes"><span class="nav-ico">$</span><span>Taxes</span></button>
-      <button class="nav-item" data-view="settings"><span class="nav-ico">⚙</span><span>Settings</span></button>
+      <button class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')"><span class="nav-ico">▦</span><span>Dashboard</span></button>
+      <button class="nav-item" data-view="tracker" onclick="switchView('tracker')"><span class="nav-ico">▤</span><span>ADMs</span></button>
+      <button class="nav-item" data-view="analytics" onclick="switchView('analytics')"><span class="nav-ico">⌭</span><span>Analytics</span></button>
+      <button class="nav-item" data-view="reasons" onclick="switchView('reasons')"><span class="nav-ico">◉</span><span>Reasons</span></button>
+      <button class="nav-item" data-view="taxes" onclick="switchView('taxes')"><span class="nav-ico">$</span><span>Taxes</span></button>
+      <button class="nav-item" data-view="settings" onclick="switchView('settings')"><span class="nav-ico">⚙</span><span>Settings</span></button>
     </nav>
     <div class="sidebar-user">
       <div class="user-avatar" id="user-avatar">A</div>
@@ -2528,12 +2528,15 @@ const _origRefresh = (window.refreshData || (()=>{}));
 async function refreshAfterData(){
   if (document.querySelector('.view-dashboard.active')) renderDashboard();
 }
-document.addEventListener('DOMContentLoaded', () => {
-  // Hook initial nav clicks
+function _wireNav(){
   document.querySelectorAll('.nav-item[data-view]').forEach(n => {
+    if (n.dataset._wired) return;
+    n.dataset._wired = '1';
     n.addEventListener('click', e => { e.preventDefault(); switchView(n.dataset.view); });
   });
-});
+}
+_wireNav(); // script is at end of body — DOMContentLoaded has already fired
+document.addEventListener('DOMContentLoaded', _wireNav);
 
 
 
