@@ -1,0 +1,2683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADM Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f6faf0; --surface:#ffffff; --surface2:#eef6e1;
+  --border:rgba(0,0,0,0.06); --border2:rgba(0,0,0,0.10);
+  --text:#1f2a17; --text2:#3a4a30; --muted:#6b7a6b;
+  --accent:#7DBC2A; --accent-h:#5a9420; --accent-soft:#C8F08A;
+  --hero-from:#A8DC4F; --hero-to:#5a9420;
+  --success:#5a9420; --warning:#f59e0b; --danger:#ef4444; --info:#06b6d4;
+  --shadow:0 2px 8px rgba(28,42,12,0.06);
+  --shadow-md:0 8px 24px rgba(28,42,12,0.08);
+  --mono:'DM Mono',monospace; --sans:'DM Sans',sans-serif;
+  --r-md:10px; --r-lg:16px; --r-xl:22px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;overflow:hidden}
+
+/* ─── App shell ─── */
+.app{display:grid;grid-template-columns:240px 1fr;height:100vh}
+@media(max-width:880px){ .app{grid-template-columns:64px 1fr} }
+
+/* ─── Sidebar ─── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:18px 14px;overflow-y:auto}
+.sidebar-logo{display:flex;align-items:center;gap:8px;padding:8px 8px 22px;font-weight:700;font-size:20px;letter-spacing:-0.02em;color:var(--text)}
+.sidebar-logo .plane{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--accent);color:#fff;border-radius:9px;font-size:16px;box-shadow:0 2px 6px rgba(125,188,42,0.30)}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--muted);font-weight:500;font-size:13px;cursor:pointer;text-decoration:none;border:none;background:transparent;font-family:inherit;text-align:left;transition:all .15s}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--surface2);color:var(--accent-h);font-weight:600}
+.nav-item.active .nav-ico{color:var(--accent)}
+.nav-ico{width:18px;display:inline-flex;justify-content:center;color:var(--muted)}
+.sidebar-user{margin-top:auto;background:var(--surface2);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.user-meta{font-size:12px;min-width:0;flex:1}
+.user-meta .name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-meta .email{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+.user-logout{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px}
+.user-logout:hover{color:var(--danger);background:rgba(239,68,68,0.08)}
+
+@media(max-width:880px){
+  .sidebar-logo span:not(.plane){display:none}
+  .sidebar-user .user-meta,.sidebar-user .user-logout{display:none}
+  .nav-item span:not(.nav-ico){display:none}
+  .nav-item{justify-content:center}
+}
+
+/* ─── Main ─── */
+.main{overflow-y:auto;padding:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10}
+.topbar-title{font-size:14px;font-weight:500;color:var(--muted)}
+.topbar-title b{color:var(--text);font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.tb-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:9px;background:transparent;border:1px solid var(--border2);color:var(--text);font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s}
+.tb-btn:hover{background:var(--surface2);border-color:var(--accent)}
+.tb-bell{position:relative;width:36px;height:36px;border-radius:50%;background:var(--surface2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.tb-bell .badge-num{position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid var(--surface)}
+.tb-export{background:var(--text);color:#fff;border:none}
+.tb-export:hover{background:var(--accent-h);color:#fff;border-color:var(--accent-h)}
+
+/* ─── Hero ─── */
+.hero{margin:24px 28px 18px;border-radius:var(--r-xl);background:linear-gradient(135deg,var(--hero-from) 0%,var(--accent) 60%,var(--hero-to) 100%);padding:36px 40px;display:grid;grid-template-columns:1fr 220px;gap:24px;color:#fff;position:relative;overflow:hidden;box-shadow:var(--shadow-md)}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(255,255,255,0.18) 0%,transparent 45%),radial-gradient(circle at 20% 100%,rgba(255,255,255,0.10) 0%,transparent 40%);pointer-events:none}
+.hero-text{position:relative;z-index:1}
+.hero-text h1{font-size:36px;font-weight:700;line-height:1.05;letter-spacing:-0.02em;margin-bottom:10px;color:#fff}
+.hero-text p{font-size:14px;color:rgba(255,255,255,0.92);max-width:520px;line-height:1.55}
+.hero-mascot{position:relative;z-index:1;display:flex;align-items:center;justify-content:center}
+.hero-mascot .wego-mascot-svg{width:200px;height:200px;filter:drop-shadow(0 12px 24px rgba(0,0,0,0.20))}
+@media(max-width:880px){
+  .hero{grid-template-columns:1fr;padding:28px 24px}
+  .hero-text h1{font-size:26px}
+  .hero-mascot .wego-mascot-svg{width:140px;height:140px;margin:0 auto}
+}
+
+/* ─── Metric tiles (dashboard) ─── */
+.metric-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:0 28px;margin-bottom:18px}
+@media(max-width:1280px){ .metric-row{grid-template-columns:repeat(3,1fr)} }
+@media(max-width:680px){ .metric-row{grid-template-columns:repeat(2,1fr)} }
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 18px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
+.metric-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.metric-ico{flex-shrink:0;width:46px;height:46px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--accent-h);font-size:20px}
+.metric-ico.warn{color:var(--warning);background:rgba(245,158,11,0.10)}
+.metric-ico.red{color:var(--danger);background:rgba(239,68,68,0.10)}
+.metric-ico.cyan{color:var(--info);background:rgba(6,182,212,0.10)}
+.metric-ico.green{color:var(--success);background:rgba(125,188,42,0.12)}
+.metric-info{flex:1;min-width:0}
+.metric-num{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--text);letter-spacing:-0.01em}
+.metric-cap{font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric-trend{font-size:11px;margin-top:4px;font-weight:500}
+.metric-trend.up{color:var(--success)}
+.metric-trend.down{color:var(--danger)}
+
+/* ─── Two-column chart row ─── */
+.chart-row{display:grid;grid-template-columns:1fr 1.4fr;gap:14px;padding:0 28px;margin-bottom:18px}
+@media(max-width:1100px){ .chart-row{grid-template-columns:1fr} }
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+.card-sel{background:var(--surface2);border:none;padding:5px 10px;border-radius:7px;font-size:12px;color:var(--muted);font-family:inherit;cursor:pointer}
+.donut-wrap{display:flex;align-items:center;gap:18px}
+.donut-canvas-wrap{position:relative;width:160px;height:160px;flex-shrink:0}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.donut-center .v{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.donut-center .l{font-size:11px;color:var(--muted)}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:8px}
+.legend-row{display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.legend-row .l{display:flex;align-items:center;gap:8px;color:var(--text)}
+.legend-row .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.legend-row .v{font-family:var(--mono);color:var(--muted)}
+
+/* ─── Sparkline cards ─── */
+.spark-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:0 28px;margin-bottom:24px}
+@media(max-width:1100px){ .spark-row{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:560px){ .spark-row{grid-template-columns:1fr} }
+.spark-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.spark-head{display:flex;align-items:center;gap:10px}
+.spark-head .ico{width:34px;height:34px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--accent-h);font-size:14px}
+.spark-head .ico.warn{color:var(--warning);background:rgba(245,158,11,0.10)}
+.spark-head .ico.red{color:var(--danger);background:rgba(239,68,68,0.10)}
+.spark-head .ico.cyan{color:var(--info);background:rgba(6,182,212,0.10)}
+.spark-head .ico.green{color:var(--success);background:rgba(125,188,42,0.12)}
+.spark-title{font-size:13px;font-weight:600;color:var(--text)}
+.spark-num{font-size:28px;font-weight:700;font-family:var(--mono);color:var(--text);line-height:1}
+.spark-sub{font-size:11px;color:var(--muted);line-height:1.4;min-height:30px}
+.spark-canvas-wrap{position:relative;height:50px}
+.spark-link{font-size:12px;color:var(--accent-h);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-top:auto;cursor:pointer;background:transparent;border:none;font-family:inherit;padding:0;align-self:flex-start}
+.spark-link:hover{color:var(--accent)}
+
+/* ─── Recent ADMs ─── */
+.recent-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px 6px;margin:0 28px 28px;box-shadow:var(--shadow)}
+.recent-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.recent-card .recent-title{font-size:14px;font-weight:600}
+.recent-link{font-size:12px;color:var(--accent-h);font-weight:600;background:transparent;border:none;cursor:pointer;font-family:inherit}
+.recent-card table{width:100%;border-collapse:collapse;font-size:13px}
+.recent-card th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border)}
+.recent-card td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+.recent-card tr:last-child td{border-bottom:none}
+
+/* ─── Badges (shared) ─── */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-dispute{background:rgba(239,68,68,0.13);color:#a13e3e}
+.badge-accepted{background:rgba(125,188,42,0.18);color:#5a9420}
+.badge-pending{background:rgba(245,158,11,0.15);color:#92660b}
+.badge-review{background:rgba(99,102,241,0.13);color:#454ac0}
+.badge-paid{background:rgba(125,188,42,0.18);color:#5a9420}
+.badge-received{background:rgba(6,182,212,0.13);color:#0c7a8c}
+.badge-needs-review{background:rgba(245,158,11,0.16);color:#92660b}
+.badge-na{background:rgba(107,114,153,0.10);color:#6b7a99}
+.badge-yes{background:rgba(125,188,42,0.16);color:#5a9420}
+.badge-no{background:rgba(107,114,153,0.10);color:#6b7a99}
+
+/* ─── Views switching ─── */
+.view{display:none}
+.view.active{display:block}
+.view-pad{padding:24px 28px}
+
+/* ─── Tracker view: metrics + toolbar + table (kept from original, restyled) ─── */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--shadow)}
+.metric-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px}
+.metric-value{font-size:24px;font-weight:600;font-family:var(--mono);color:var(--text)}
+.metric-value.blue{color:var(--accent)}
+.metric-value.amber{color:var(--warning)}
+.metric-value.red{color:var(--danger)}
+.metric-value.green{color:var(--success)}
+
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.search-wrap{position:relative;flex:1;min-width:220px;max-width:360px}
+.search-wrap input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:10px;color:var(--text);padding:9px 12px 9px 36px;font-size:13px;font-family:var(--sans);outline:none}
+.search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(125,188,42,0.15)}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+select.filter{background:var(--surface);border:1px solid var(--border2);border-radius:10px;color:var(--text);padding:9px 12px;font-size:13px;font-family:var(--sans);outline:none;cursor:pointer}
+select.filter:focus{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;font-size:13px;font-family:var(--sans);font-weight:500;cursor:pointer;border:none;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-h)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2)}
+.btn-ghost:hover{color:var(--text);background:var(--surface2)}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,0.3)}
+.btn-danger:hover{background:rgba(239,68,68,0.1)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:7px}
+
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+table.adm-table{width:100%;border-collapse:collapse;font-size:13px}
+table.adm-table thead tr{background:var(--surface2);border-bottom:1px solid var(--border2)}
+table.adm-table th{padding:12px 14px;text-align:left;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap}
+table.adm-table td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+table.adm-table tr:last-child td{border-bottom:none}
+table.adm-table tr:hover td{background:rgba(125,188,42,0.04)}
+.mono{font-family:var(--mono);font-size:12px}
+.amount{font-family:var(--mono);font-weight:500;color:var(--warning)}
+
+/* tax chips, check chips, multi-cells (kept from original) */
+.tax-grid{display:flex;flex-wrap:wrap;gap:6px;background:var(--surface2);padding:10px;border:1px solid var(--border2);border-radius:10px;max-height:160px;overflow-y:auto}
+.tax-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;background:var(--surface);border:1px solid var(--border2);cursor:pointer;font-size:12px;font-family:var(--mono);transition:all 0.12s;user-select:none}
+.tax-chip:hover{border-color:var(--accent);background:#fafdf6}
+.tax-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.tax-chip-title{font-weight:600}
+.tax-add-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:14px;background:transparent;border:1px dashed var(--border2);cursor:pointer;font-size:12px;color:var(--accent-h);font-family:var(--sans)}
+.tax-add-btn:hover{border-color:var(--accent);background:#fafdf6}
+.reason-add-link{font-size:11px;color:var(--accent-h);background:transparent;border:none;cursor:pointer;font-weight:500;text-decoration:underline;margin-top:4px;padding:0;font-family:var(--sans)}
+.reason-add-link:hover{color:var(--accent)}
+.tax-cell,.platform-cell,.causedby-cell,.multi-cell{display:inline-flex;flex-wrap:wrap;gap:3px;max-width:200px}
+.tax-cell .badge{font-family:var(--mono);font-size:10px;background:rgba(125,188,42,0.15);color:#5a9420;padding:2px 6px}
+.platform-cell .badge{font-size:10px;background:rgba(99,102,241,0.15);color:#454ac0;padding:2px 7px;font-weight:500}
+.causedby-cell .badge{font-size:10px;background:rgba(245,158,11,0.15);color:#92660b;padding:2px 7px;font-weight:500}
+.mono-badge{font-family:var(--mono);font-size:10px;background:rgba(99,102,241,0.10);color:#454ac0;padding:2px 6px}
+.check-grid{display:flex;flex-wrap:wrap;gap:6px;background:var(--surface2);padding:10px;border:1px solid var(--border2);border-radius:10px}
+.check-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:18px;background:var(--surface);border:1.5px solid var(--border2);cursor:pointer;font-size:12px;transition:all 0.12s;user-select:none;font-weight:500}
+.check-chip:hover{border-color:var(--accent);background:#fafdf6}
+.check-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.check-chip-mark{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;background:#fff;font-size:10px;color:transparent;line-height:1}
+.check-chip.on .check-chip-mark{background:#fff;border-color:#fff;color:var(--accent)}
+
+/* empty + loading */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:0.3}
+.empty h3{font-size:15px;color:var(--text);margin-bottom:6px}
+.loading{text-align:center;padding:60px 20px;color:var(--muted)}
+.spinner{width:32px;height:32px;border:3px solid var(--surface2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* analytics */
+.analytics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:18px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow)}
+.chart-card.wide{grid-column:span 2}
+@media(max-width:880px){.chart-card.wide{grid-column:span 1}}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.chart-sub{font-size:11px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.06em}
+.chart-card canvas{max-height:280px}
+.timeframe-toggle{display:inline-flex;gap:0;background:var(--surface2);border-radius:7px;padding:2px}
+.timeframe-toggle button{background:transparent;border:none;padding:4px 10px;font-size:11px;color:var(--muted);font-family:var(--sans);cursor:pointer;border-radius:5px;font-weight:500}
+.timeframe-toggle button.active{background:var(--surface);color:var(--accent-h);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.summary-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.summary-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;box-shadow:var(--shadow)}
+.summary-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px}
+.summary-value{font-size:20px;font-weight:600;font-family:var(--mono);color:var(--accent-h)}
+
+/* ─── Mascot animations (carried over from original) ─── */
+.wego-mascot-svg{width:100%;height:100%;display:block;overflow:visible;transform-origin:50% 90%;animation:wego-float 4s ease-in-out infinite}
+.wego-mascot-svg .mascot-body{transform-origin:50% 88%;animation:wego-breathe 2.6s ease-in-out infinite}
+.wego-mascot-svg .mascot-shadow{transform-origin:50% 92%;animation:wego-shadow-scale 4s ease-in-out infinite}
+.wego-mascot-svg .fuzz-back path{transform-origin:center;animation:wego-fuzz 3s ease-in-out infinite}
+.wego-mascot-svg .pupil{transform-origin:center;animation:wego-blink 5s ease-in-out infinite}
+.wego-mascot-svg .spark{opacity:0;animation:wego-sparkle 3s ease-in-out infinite}
+.wego-mascot-svg .spark.s1{animation-delay:0s}.wego-mascot-svg .spark.s2{animation-delay:.7s}
+.wego-mascot-svg .spark.s3{animation-delay:1.4s}.wego-mascot-svg .spark.s4{animation-delay:2.1s}
+.wego-mascot-svg .mascot-fists{transform-origin:50% 60%;animation:wego-cheer 2.8s ease-in-out infinite}
+.wego-mascot-svg .mascot-antennae{transform-origin:50% 30%;animation:wego-antennae 3s ease-in-out infinite}
+@keyframes wego-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+@keyframes wego-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,.97)}}
+@keyframes wego-shadow-scale{0%,100%{transform:scaleX(1);opacity:.20}50%{transform:scaleX(.85);opacity:.12}}
+@keyframes wego-fuzz{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes wego-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes wego-sparkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:.9;transform:scale(1.4)}}
+@keyframes wego-cheer{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px) rotate(-1deg)}}
+@keyframes wego-antennae{0%,100%{transform:rotate(0deg)}50%{transform:rotate(2deg)}}
+@media(prefers-reduced-motion:reduce){
+  .wego-mascot-svg,.mascot-body,.pupil,.spark,.fuzz-back path,.mascot-fists,.mascot-antennae,.mascot-shadow{animation:none!important}
+}
+
+/* ─── Modal styles (compact, restyled) ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(28,42,12,0.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;animation:fade .15s ease}
+.modal{background:var(--surface);border-radius:var(--r-xl);max-width:760px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.20)}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:17px;font-weight:600}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px 10px;border-radius:8px}
+.modal-close:hover{background:var(--surface2);color:var(--text)}
+.modal-body{padding:22px 24px;overflow-y:auto;display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.modal-body .form-field{display:flex;flex-direction:column;gap:5px}
+.modal-body .form-field.full{grid-column:1/-1}
+.modal-body label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em}
+.modal-body input,.modal-body select,.modal-body textarea,.form-input,.form-select{background:var(--surface);border:1.5px solid var(--border2);border-radius:9px;padding:9px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none;transition:all .15s;width:100%}
+.modal-body input:focus,.modal-body select:focus,.modal-body textarea:focus,.form-input:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(125,188,42,0.15)}
+.modal-body textarea{resize:vertical;min-height:64px;font-family:var(--sans)}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* file drop */
+.file-drop{border:2px dashed var(--border2);border-radius:12px;padding:30px 20px;text-align:center;color:var(--muted);cursor:pointer;transition:all .15s}
+.file-drop:hover{border-color:var(--accent);background:#fafdf6}
+.file-drop.drag{border-color:var(--accent);background:#fafdf6;color:var(--accent-h)}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.thumb{width:100px;height:100px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);overflow:hidden;position:relative}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .x{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1}
+.parse-status{padding:10px 14px;border-radius:9px;font-size:13px;margin:10px 0}
+.parse-status.loading{background:rgba(6,182,212,0.10);color:#0c7a8c}
+.parse-status.success{background:rgba(125,188,42,0.13);color:#5a9420}
+.parse-status.error{background:rgba(239,68,68,0.10);color:#a13e3e}
+
+table.parsed-table{width:100%;border-collapse:collapse;font-size:12px}
+table.parsed-table th,table.parsed-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left}
+table.parsed-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;background:var(--surface2)}
+
+/* toast */
+#toast-container{position:fixed;top:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:200}
+.toast{background:var(--text);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;box-shadow:0 8px 20px rgba(0,0,0,0.18);animation:slide-in .2s ease}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--danger)}
+@keyframes slide-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+
+.admin-row{padding:8px 10px;border-bottom:1px solid var(--border);font-size:13px}
+.admin-row:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ─── Sidebar ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="plane">✈</span>
+      <span>ADM</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')"><span class="nav-ico">▦</span><span>Dashboard</span></button>
+      <button class="nav-item" data-view="tracker" onclick="switchView('tracker')"><span class="nav-ico">▤</span><span>ADMs</span></button>
+      <button class="nav-item" data-view="analytics" onclick="switchView('analytics')"><span class="nav-ico">⌭</span><span>Analytics</span></button>
+      <button class="nav-item" data-view="reasons" onclick="switchView('reasons')"><span class="nav-ico">◉</span><span>Reasons</span></button>
+      <button class="nav-item" data-view="taxes" onclick="switchView('taxes')"><span class="nav-ico">$</span><span>Taxes</span></button>
+      <button class="nav-item" data-view="settings" onclick="switchView('settings')"><span class="nav-ico">⚙</span><span>Settings</span></button>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">A</div>
+      <div class="user-meta">
+        <div class="name" id="user-name">Loading…</div>
+        <div class="email" id="user-email">—</div>
+      </div>
+      <button class="user-logout" onclick="logout()" title="Sign out">⎋</button>
+    </div>
+  </aside>
+
+  <!-- ─── Main ─── -->
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">Welcome back · <b id="topbar-section">Dashboard</b></div>
+      <div class="topbar-right">
+        <div class="tb-bell" title="Notifications">🔔<span class="badge-num" id="notif-count" style="display:none">0</span></div>
+        <button class="tb-btn tb-export" onclick="exportCSV()"><span>⬇</span> Export Report</button>
+      </div>
+    </header>
+
+    <!-- ─── DASHBOARD VIEW ─── -->
+    <section class="view view-dashboard active">
+      <div class="hero">
+        <div class="hero-text">
+          <h1>Let's Fight ADMs<br>Together</h1>
+          <p>Identify. Prevent. Track. Recover. Your end-to-end ADM management workspace for the team.</p>
+        </div>
+        <div class="hero-mascot"><svg viewBox="-12 -28 124 138" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="wego-mascot-svg">
+  <defs>
+    <radialGradient id="m_body" cx="38%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="#D8F896"/>
+      <stop offset="22%" stop-color="#B8E866"/>
+      <stop offset="50%" stop-color="#8FC93A"/>
+      <stop offset="80%" stop-color="#5a9420"/>
+      <stop offset="100%" stop-color="#2d4e0a"/>
+    </radialGradient>
+    <radialGradient id="m_hl" cx="32%" cy="22%" r="38%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.95)"/>
+      <stop offset="55%" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+    <radialGradient id="m_eye" cx="38%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="78%" stop-color="#f3f3f3"/>
+      <stop offset="100%" stop-color="#c0c0c0"/>
+    </radialGradient>
+    <radialGradient id="m_iris" cx="40%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#3a5d18"/>
+      <stop offset="60%" stop-color="#1a2e0b"/>
+      <stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="m_ant" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#C8F08A"/>
+      <stop offset="100%" stop-color="#5a9420"/>
+    </radialGradient>
+    <filter id="m_shadow" x="-30%" y="-10%" width="160%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/><feOffset dy="3"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <ellipse class="mascot-shadow" cx="50" cy="98" rx="28" ry="3.4" fill="rgba(0,0,0,0.22)"/>
+  <g class="mascot-antennae">
+    <path d="M 34 26 Q 22 12 26 -18" stroke="#4a7a18" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="26" cy="-19" r="4.2" fill="url(#m_ant)"/>
+    <circle cx="24.5" cy="-21" r="1.2" fill="rgba(255,255,255,0.7)"/>
+    <path d="M 66 26 Q 78 12 74 -18" stroke="#4a7a18" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="74" cy="-19" r="4.2" fill="url(#m_ant)"/>
+    <circle cx="72.5" cy="-21" r="1.2" fill="rgba(255,255,255,0.7)"/>
+  </g>
+  <g class="fuzz-back" fill="#3d6a14" opacity="0.95">
+      <path d="M77.6 60.6L89.0 58.0L77.6 55.4Z"/>
+      <path d="M76.6 66.5L89.0 66.3L77.6 61.4Z"/>
+      <path d="M74.5 72.0L87.5 74.7L76.5 67.2Z"/>
+      <path d="M71.5 77.0L84.4 82.7L74.4 72.7Z"/>
+      <path d="M67.7 81.3L77.6 87.7L71.4 77.6Z"/>
+      <path d="M63.2 84.7L72.1 93.6L67.5 81.8Z"/>
+      <path d="M58.2 87.0L65.5 98.3L63.0 85.1Z"/>
+      <path d="M52.8 88.3L58.1 101.5L57.9 87.3Z"/>
+      <path d="M47.4 88.4L50.0 100.0L52.6 88.4Z"/>
+      <path d="M42.1 87.3L42.2 100.0L47.2 88.3Z"/>
+      <path d="M37.0 85.1L34.5 98.3L41.8 87.0Z"/>
+      <path d="M32.5 81.8L27.0 94.9L36.8 84.7Z"/>
+      <path d="M28.6 77.6L22.4 87.7L32.3 81.3Z"/>
+      <path d="M25.6 72.7L16.9 81.8L28.5 77.0Z"/>
+      <path d="M23.5 67.2L12.5 74.7L25.5 72.0Z"/>
+      <path d="M22.4 61.4L9.4 66.7L23.4 66.5Z"/>
+      <path d="M22.4 55.4L11.0 58.0L22.4 60.6Z"/>
+      <path d="M23.4 49.5L11.0 49.7L22.4 54.6Z"/>
+      <path d="M25.5 44.0L12.5 41.3L23.5 48.8Z"/>
+      <path d="M28.5 39.0L15.6 33.3L25.6 43.3Z"/>
+      <path d="M32.3 34.7L22.4 28.3L28.6 38.4Z"/>
+      <path d="M36.8 31.3L27.9 22.4L32.5 34.2Z"/>
+      <path d="M41.8 29.0L34.5 17.7L37.0 30.9Z"/>
+      <path d="M47.2 27.7L41.9 14.5L42.1 28.7Z"/>
+      <path d="M52.6 27.6L50.0 16.0L47.4 27.6Z"/>
+      <path d="M57.9 28.7L57.8 16.0L52.8 27.7Z"/>
+      <path d="M63.0 30.9L65.5 17.7L58.2 29.0Z"/>
+      <path d="M67.5 34.2L73.0 21.1L63.2 31.3Z"/>
+      <path d="M71.4 38.4L77.6 28.3L67.7 34.7Z"/>
+      <path d="M74.4 43.3L83.1 34.2L71.5 39.0Z"/>
+      <path d="M76.5 48.8L87.5 41.3L74.5 44.0Z"/>
+      <path d="M77.6 54.6L90.6 49.3L76.6 49.5Z"/>
+
+  </g>
+  <g class="fuzz-mid" fill="#4a7a18" opacity="0.9">
+      <path d="M78.2 62.6L84.9 61.3L78.6 58.8Z"/>
+      <path d="M77.0 67.9L84.7 68.1L78.0 64.3Z"/>
+      <path d="M75.0 73.0L83.4 74.8L76.6 69.5Z"/>
+      <path d="M72.3 77.5L78.7 79.8L74.4 74.4Z"/>
+      <path d="M68.8 81.5L75.4 85.5L71.5 78.8Z"/>
+      <path d="M64.8 84.8L71.1 90.6L67.9 82.6Z"/>
+      <path d="M60.3 87.2L64.8 92.4L63.8 85.6Z"/>
+      <path d="M55.5 88.8L59.3 95.6L59.2 87.8Z"/>
+      <path d="M50.6 89.4L53.2 97.6L54.4 89.1Z"/>
+      <path d="M45.6 89.1L47.0 95.9L49.4 89.4Z"/>
+      <path d="M40.8 87.8L40.7 95.6L44.5 88.8Z"/>
+      <path d="M36.2 85.6L34.5 94.1L39.7 87.2Z"/>
+      <path d="M32.1 82.6L29.9 89.1L35.2 84.8Z"/>
+      <path d="M28.5 78.8L24.6 85.5L31.2 81.5Z"/>
+      <path d="M25.6 74.4L19.9 80.8L27.7 77.5Z"/>
+      <path d="M23.4 69.5L18.3 74.1L25.0 73.0Z"/>
+      <path d="M22.0 64.3L15.3 68.1L23.0 68.0Z"/>
+      <path d="M21.4 58.8L13.3 61.5L21.8 62.6Z"/>
+      <path d="M21.8 53.4L15.1 54.7L21.4 57.2Z"/>
+      <path d="M23.0 48.1L15.3 47.9L22.0 51.7Z"/>
+      <path d="M25.0 43.0L16.6 41.2L23.4 46.5Z"/>
+      <path d="M27.7 38.5L21.3 36.2L25.6 41.6Z"/>
+      <path d="M31.2 34.5L24.6 30.5L28.5 37.2Z"/>
+      <path d="M35.2 31.2L28.9 25.4L32.1 33.4Z"/>
+      <path d="M39.7 28.8L35.2 23.6L36.2 30.4Z"/>
+      <path d="M44.5 27.2L40.7 20.4L40.8 28.2Z"/>
+      <path d="M49.4 26.6L46.8 18.4L45.6 26.9Z"/>
+      <path d="M54.4 26.9L53.0 20.1L50.6 26.6Z"/>
+      <path d="M59.2 28.2L59.3 20.4L55.5 27.2Z"/>
+      <path d="M63.8 30.4L65.5 21.9L60.3 28.8Z"/>
+      <path d="M67.9 33.4L70.1 26.9L64.8 31.2Z"/>
+      <path d="M71.5 37.2L75.4 30.5L68.8 34.5Z"/>
+      <path d="M74.4 41.6L80.1 35.2L72.3 38.5Z"/>
+      <path d="M76.6 46.5L81.7 41.9L75.0 43.0Z"/>
+      <path d="M78.0 51.7L84.7 47.9L77.0 48.0Z"/>
+      <path d="M78.6 57.2L86.7 54.5L78.2 53.4Z"/>
+
+  </g>
+  <g class="mascot-body" filter="url(#m_shadow)">
+    <ellipse cx="50" cy="58" rx="30" ry="33" fill="url(#m_body)"/>
+    <g class="fuzz-front" fill="#5a9420" opacity="0.95">
+      <path d="M79.6 60.7L82.5 59.4L79.7 57.9Z"/>
+      <path d="M78.9 65.5L82.5 64.8L79.4 62.8Z"/>
+      <path d="M77.5 70.2L81.8 70.2L78.5 67.6Z"/>
+      <path d="M75.6 74.6L78.7 74.7L76.9 72.1Z"/>
+      <path d="M73.0 78.6L76.6 79.5L74.7 76.3Z"/>
+      <path d="M70.0 82.1L73.8 84.0L71.9 80.2Z"/>
+      <path d="M66.4 85.2L69.2 86.6L68.7 83.5Z"/>
+      <path d="M62.6 87.6L65.4 90.0L65.0 86.3Z"/>
+      <path d="M58.4 89.3L61.0 92.7L61.1 88.4Z"/>
+      <path d="M54.1 90.4L56.0 92.9L56.8 89.9Z"/>
+      <path d="M49.6 90.7L51.2 94.1L52.4 90.6Z"/>
+      <path d="M45.2 90.3L46.1 94.5L48.0 90.6Z"/>
+      <path d="M40.9 89.2L41.5 92.3L43.6 89.9Z"/>
+      <path d="M36.8 87.3L36.7 91.1L39.3 88.5Z"/>
+      <path d="M32.9 84.9L32.0 89.0L35.3 86.4Z"/>
+      <path d="M29.5 81.8L28.7 84.8L31.6 83.6Z"/>
+      <path d="M26.5 78.2L24.9 81.5L28.3 80.3Z"/>
+      <path d="M24.1 74.1L21.4 77.4L25.6 76.5Z"/>
+      <path d="M22.2 69.7L20.2 72.1L23.3 72.3Z"/>
+      <path d="M20.9 65.0L18.0 67.3L21.7 67.7Z"/>
+      <path d="M20.3 60.2L16.5 62.0L20.6 63.0Z"/>
+      <path d="M20.4 55.3L17.5 56.6L20.3 58.1Z"/>
+      <path d="M21.1 50.5L17.5 51.2L20.6 53.2Z"/>
+      <path d="M22.5 45.8L18.2 45.8L21.5 48.4Z"/>
+      <path d="M24.4 41.4L21.3 41.3L23.1 43.9Z"/>
+      <path d="M27.0 37.4L23.4 36.5L25.3 39.7Z"/>
+      <path d="M30.0 33.9L26.2 32.0L28.1 35.8Z"/>
+      <path d="M33.6 30.8L30.8 29.4L31.3 32.5Z"/>
+      <path d="M37.4 28.4L34.6 26.0L35.0 29.7Z"/>
+      <path d="M41.6 26.7L39.0 23.3L38.9 27.6Z"/>
+      <path d="M45.9 25.6L44.0 23.1L43.2 26.1Z"/>
+      <path d="M50.4 25.3L48.8 21.9L47.6 25.4Z"/>
+      <path d="M54.8 25.7L53.9 21.5L52.0 25.4Z"/>
+      <path d="M59.1 26.8L58.5 23.7L56.4 26.1Z"/>
+      <path d="M63.2 28.7L63.3 24.9L60.7 27.5Z"/>
+      <path d="M67.1 31.1L68.0 27.0L64.7 29.6Z"/>
+      <path d="M70.5 34.2L71.3 31.2L68.4 32.4Z"/>
+      <path d="M73.5 37.8L75.1 34.5L71.7 35.7Z"/>
+      <path d="M75.9 41.9L78.6 38.6L74.4 39.5Z"/>
+      <path d="M77.8 46.3L79.8 43.9L76.7 43.7Z"/>
+      <path d="M79.1 51.0L82.0 48.7L78.3 48.3Z"/>
+      <path d="M79.7 55.8L83.5 54.0L79.4 53.0Z"/>
+
+    </g>
+    <ellipse cx="38" cy="40" rx="20" ry="14" fill="url(#m_hl)"/>
+    <ellipse cx="32" cy="32" rx="2.6" ry="1.6" fill="rgba(255,255,255,0.65)"/>
+    <g class="mascot-arms">
+      <ellipse cx="22" cy="78" rx="6" ry="5" fill="#5a9420"/>
+      <ellipse cx="20" cy="76" rx="2" ry="1.3" fill="rgba(255,255,255,0.4)"/>
+      <ellipse cx="78" cy="78" rx="6" ry="5" fill="#5a9420"/>
+      <ellipse cx="80" cy="76" rx="2" ry="1.3" fill="rgba(255,255,255,0.4)"/>
+    </g>
+    <g class="mascot-eyes">
+      <ellipse cx="36" cy="58" rx="10" ry="12.5" fill="url(#m_eye)"/>
+      <ellipse cx="64" cy="58" rx="10" ry="12.5" fill="url(#m_eye)"/>
+      <ellipse class="pupil" cx="38" cy="60" rx="5.6" ry="7" fill="url(#m_iris)"/>
+      <ellipse class="pupil" cx="62" cy="60" rx="5.6" ry="7" fill="url(#m_iris)"/>
+      <ellipse cx="40" cy="56" rx="2.4" ry="3" fill="#fff"/>
+      <ellipse cx="64" cy="56" rx="2.4" ry="3" fill="#fff"/>
+      <circle cx="35" cy="63" r="0.9" fill="rgba(255,255,255,0.7)"/>
+      <circle cx="59" cy="63" r="0.9" fill="rgba(255,255,255,0.7)"/>
+    </g>
+    <path d="M 42 78 Q 50 84 58 78" stroke="#1a2e0b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="26" cy="72" rx="4" ry="2.4" fill="#ef8f8f" opacity="0.45"/>
+    <ellipse cx="74" cy="72" rx="4" ry="2.4" fill="#ef8f8f" opacity="0.45"/>
+    <ellipse cx="40" cy="92" rx="6.5" ry="2.8" fill="#3d6a14"/>
+    <ellipse cx="60" cy="92" rx="6.5" ry="2.8" fill="#3d6a14"/>
+  </g>
+  <g class="sparkles" fill="#A8DC4F">
+    <circle class="spark s1" cx="8" cy="10" r="1.6"/>
+    <circle class="spark s2" cx="92" cy="10" r="1.4"/>
+    <circle class="spark s3" cx="100" cy="55" r="1.5"/>
+    <circle class="spark s4" cx="0" cy="60" r="1.3"/>
+  </g>
+</svg></div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric-card">
+          <div class="metric-ico">📋</div>
+          <div class="metric-info">
+            <div class="metric-num" id="d-total">—</div>
+            <div class="metric-cap">Total ADMs</div>
+            <div class="metric-trend up" id="d-total-trend"></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ico warn">⏳</div>
+          <div class="metric-info">
+            <div class="metric-num" id="d-pending">—</div>
+            <div class="metric-cap">Pending Review</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ico red">⚠</div>
+          <div class="metric-info">
+            <div class="metric-num" id="d-dispute">—</div>
+            <div class="metric-cap">To Dispute</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ico green">✓</div>
+          <div class="metric-info">
+            <div class="metric-num" id="d-accepted">—</div>
+            <div class="metric-cap">Accepted</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-ico cyan">$</div>
+          <div class="metric-info">
+            <div class="metric-num" id="d-usd">—</div>
+            <div class="metric-cap">Total Disputed (USD)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-row">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">ADM Overview</div>
+            <select class="card-sel"><option>All time</option></select>
+          </div>
+          <div class="donut-wrap">
+            <div class="donut-canvas-wrap">
+              <canvas id="chart-dash-donut"></canvas>
+              <div class="donut-center"><div class="v" id="donut-total">0</div><div class="l">Total ADMs</div></div>
+            </div>
+            <div class="donut-legend" id="donut-legend"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">ADM Trend</div>
+            <select class="card-sel"><option>Last 14 days</option></select>
+          </div>
+          <div style="height:240px;position:relative"><canvas id="chart-dash-trend"></canvas></div>
+        </div>
+      </div>
+
+      <div class="spark-row">
+        <div class="spark-card">
+          <div class="spark-head"><div class="ico warn">⏳</div><div class="spark-title">Pending Review</div></div>
+          <div class="spark-num" id="sp-pending-num">—</div>
+          <div class="spark-sub" id="sp-pending-sub">Awaiting team action</div>
+          <div class="spark-canvas-wrap"><canvas id="sp-pending-canvas"></canvas></div>
+          <button class="spark-link" onclick="switchView('tracker')">View details →</button>
+        </div>
+        <div class="spark-card">
+          <div class="spark-head"><div class="ico red">⚠</div><div class="spark-title">To Dispute</div></div>
+          <div class="spark-num" id="sp-dispute-num">—</div>
+          <div class="spark-sub" id="sp-dispute-sub">Open dispute cases</div>
+          <div class="spark-canvas-wrap"><canvas id="sp-dispute-canvas"></canvas></div>
+          <button class="spark-link" onclick="switchView('tracker')">View details →</button>
+        </div>
+        <div class="spark-card">
+          <div class="spark-head"><div class="ico green">✓</div><div class="spark-title">Accepted</div></div>
+          <div class="spark-num" id="sp-accepted-num">—</div>
+          <div class="spark-sub" id="sp-accepted-sub">Resolved ADMs</div>
+          <div class="spark-canvas-wrap"><canvas id="sp-accepted-canvas"></canvas></div>
+          <button class="spark-link" onclick="switchView('tracker')">View details →</button>
+        </div>
+        <div class="spark-card">
+          <div class="spark-head"><div class="ico cyan">$</div><div class="spark-title">Awaiting Payment</div></div>
+          <div class="spark-num" id="sp-finance-num">—</div>
+          <div class="spark-sub" id="sp-finance-sub">Finance: Needs Review</div>
+          <div class="spark-canvas-wrap"><canvas id="sp-finance-canvas"></canvas></div>
+          <button class="spark-link" onclick="switchView('tracker')">View details →</button>
+        </div>
+      </div>
+
+      <div class="recent-card">
+        <div class="recent-card-head">
+          <div class="recent-title">Recent ADMs</div>
+          <button class="recent-link" onclick="switchView('tracker')">View all →</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Ticket No</th>
+              <th>Airline</th>
+              <th>Reason</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Received</th>
+            </tr>
+          </thead>
+          <tbody id="recent-adms-body">
+            <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ─── TRACKER VIEW ─── -->
+    <section class="view view-tracker view-pad">
+      <div class="toolbar" style="margin-bottom:20px;justify-content:flex-end">
+        <button class="btn btn-ghost btn-sm" onclick="openUploadModal()" style="color:var(--info);border-color:rgba(6,182,212,0.3)">⬆ Import File</button>
+        <button class="btn btn-primary" onclick="openModal()">+ Add ADM</button>
+      </div>
+
+    <!-- ════════ TRACKER VIEW ════════ -->
+    <div id="tracker-view">
+    <!-- Metrics -->
+    <div class="metrics" id="metrics">
+      <div class="metric"><div class="metric-label">Total ADMs</div><div class="metric-value blue" id="m-total">—</div></div>
+      <div class="metric"><div class="metric-label">Total Amount</div><div class="metric-value amber" id="m-amount">—</div></div>
+      <div class="metric"><div class="metric-label">To Dispute</div><div class="metric-value red" id="m-dispute">—</div></div>
+      <div class="metric"><div class="metric-label">Pending Review</div><div class="metric-value amber" id="m-pending">—</div></div>
+      <div class="metric"><div class="metric-label">Accepted</div><div class="metric-value green" id="m-accepted">—</div></div>
+      <div class="metric"><div class="metric-label">Awaiting Payment</div><div class="metric-value amber" id="m-finance-review">—</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search" placeholder="Search ticket, PNR, airline…" oninput="renderTable()">
+      </div>
+      <select class="filter" id="f-status" onchange="renderTable()">
+        <option value="">All statuses</option>
+        <option>Pending</option>
+        <option>Dispute</option>
+        <option>Accepted</option>
+        <option>Review</option>
+      </select>
+      <select class="filter" id="f-airline" onchange="renderTable()">
+        <option value="">All airlines</option>
+      </select>
+      <select class="filter" id="f-reason" onchange="renderTable()">
+        <option value="">All reasons</option>
+      </select>
+      <select class="filter" id="f-finance-filter" onchange="renderTable()">
+        <option value="">All payments</option>
+        <option>Needs Review</option>
+        <option>Paid</option>
+        <option>Received</option>
+        <option value="N/A">No payment status</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <div id="table-container">
+        <div class="loading"><div class="spinner"></div><br>Loading ADMs…</div>
+      </div>
+    </div>
+    </div>
+    <!-- ════════ /TRACKER VIEW ════════ -->
+
+    </section>
+
+    <!-- ─── ANALYTICS VIEW ─── -->
+    <section class="view view-analytics view-pad">
+    <!-- ════════ ANALYTICS VIEW ════════ -->
+    <div id="analytics-view" style="display:none">
+      <div class="summary-strip" id="analytics-summary"></div>
+      <div class="analytics-grid">
+        <div class="chart-card wide">
+          <div class="chart-title">
+            <span>Amount over time</span>
+            <span class="timeframe-toggle">
+              <button data-tf="day"   onclick="setTimeframe('day')">Day</button>
+              <button data-tf="week"  onclick="setTimeframe('week')">Week</button>
+              <button data-tf="month" class="active" onclick="setTimeframe('month')">Month</button>
+            </span>
+          </div>
+          <div class="chart-sub">Sum of amounts grouped by <span id="tf-label">month</span></div>
+          <canvas id="chart-time"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><span>ADMs by Airline</span></div>
+          <div class="chart-sub">Top 10 airlines by count</div>
+          <canvas id="chart-airline"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><span>By Status</span></div>
+          <div class="chart-sub">Accepted vs Dispute vs Pending vs Review</div>
+          <canvas id="chart-status"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><span>By Reason</span></div>
+          <div class="chart-sub">Distribution of ADM reasons</div>
+          <canvas id="chart-reason"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><span>Payment Status</span></div>
+          <div class="chart-sub">Finance follow-up state</div>
+          <canvas id="chart-payment"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- ════════ /ANALYTICS VIEW ════════ -->
+
+  </div>
+</div>
+
+
+    </section>
+
+    <!-- ─── REASONS VIEW ─── -->
+    <section class="view view-reasons view-pad">
+      <h2 style="font-size:20px;margin-bottom:14px">Reasons</h2>
+      <div class="card" id="reasons-admin" style="display:flex;flex-direction:column;gap:6px">Loading…</div>
+    </section>
+
+    <!-- ─── TAXES VIEW ─── -->
+    <section class="view view-taxes view-pad">
+      <h2 style="font-size:20px;margin-bottom:14px">Tax codes</h2>
+      <div class="card" id="taxes-admin" style="display:flex;flex-direction:column;gap:6px">Loading…</div>
+    </section>
+
+    <!-- ─── SETTINGS VIEW ─── -->
+    <section class="view view-settings view-pad">
+      <h2 style="font-size:20px;margin-bottom:14px">Settings</h2>
+      <div class="card">
+        <p style="color:var(--muted);font-size:13px;line-height:1.7">Profile and admin settings are controlled by environment variables on the server.<br><br>To change the admin email, Gmail App Password, or session secret, update the env vars on Render and redeploy.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-bg" id="modal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Add ADM</div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Received Date</label>
+        <input type="date" id="f-received">
+      </div>
+      <div class="form-group">
+        <label>ADM Issued Date</label>
+        <input type="date" id="f-issued">
+      </div>
+      <div class="form-group">
+        <label>Airline</label>
+        <input type="text" id="f-airline-in" placeholder="e.g. Emirates">
+      </div>
+      <div class="form-group">
+        <label>Supplier</label>
+        <input type="text" id="f-supplier" placeholder="e.g. Amadeus">
+      </div>
+      <div class="form-group">
+        <label>GDS</label>
+        <input type="text" id="f-gds" placeholder="e.g. Amadeus / Sabre">
+      </div>
+      <div class="form-group">
+        <label>PCC</label>
+        <input type="text" id="f-pcc" placeholder="e.g. DXB1">
+      </div>
+      <div class="form-group">
+        <label>Ticket No(s)</label>
+        <input type="text" id="f-ticket" placeholder="e.g. 176-1234567 (comma-separate multiple)">
+      </div>
+      <div class="form-group">
+        <label>PNR(s)</label>
+        <input type="text" id="f-pnr" placeholder="e.g. ABC123, XYZ789">
+      </div>
+      <div class="form-group">
+        <label>Amount</label>
+        <input type="number" id="f-amount" placeholder="0.00" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Currency</label>
+        <select class="form-select" id="f-currency">
+          <option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option><option>CHF</option><option>AUD</option><option>CAD</option><option>NZD</option><option>CNY</option><option>HKD</option><option>SGD</option><option>KRW</option><option>INR</option><option>AED</option><option>SAR</option><option>KWD</option><option>BHD</option><option>OMR</option><option>QAR</option><option>JOD</option><option>LBP</option><option>EGP</option><option>MAD</option><option>TND</option><option>DZD</option><option>LYD</option><option>IQD</option><option>IRR</option><option>YER</option><option>AFN</option><option>SYP</option><option>SDG</option><option>TRY</option><option>ILS</option><option>ZAR</option><option>NGN</option><option>KES</option><option>UGX</option><option>TZS</option><option>GHS</option><option>ETB</option><option>MUR</option><option>PKR</option><option>BDT</option><option>LKR</option><option>NPR</option><option>BTN</option><option>MVR</option><option>MYR</option><option>IDR</option><option>THB</option><option>VND</option><option>PHP</option><option>TWD</option><option>MMK</option><option>KHR</option><option>LAK</option><option>BND</option><option>MOP</option><option>KZT</option><option>UZS</option><option>KGS</option><option>TJS</option><option>TMT</option><option>AZN</option><option>GEL</option><option>AMD</option><option>BYN</option><option>MDL</option><option>UAH</option><option>RUB</option><option>PLN</option><option>CZK</option><option>HUF</option><option>RON</option><option>BGN</option><option>HRK</option><option>SEK</option><option>NOK</option><option>DKK</option><option>ISK</option><option>BRL</option><option>MXN</option><option>ARS</option><option>CLP</option><option>COP</option><option>PEN</option><option>UYU</option><option>PYG</option><option>BOB</option><option>VES</option><option>XOF</option><option>XAF</option><option>MZN</option><option>AOA</option><option>XCD</option>
+          <option>GBP</option><option>SGD</option><option>SAR</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Reason</label>
+        <select class="form-select" id="f-reason-in" onchange="onReasonChange(this)">
+          <option value="">Select reason</option>
+        </select>
+        <button type="button" class="reason-add-link" onclick="promptAddReason()">+ Add new reason</button>
+      <!-- Tax-issue cause: appears only when Reason = Tax Issue -->
+      <div id="tax-cause-wrap" class="form-field full" style="display:none;margin-top:10px">
+        <label>Which tax(es) caused this ADM? <span style="text-transform:none;font-weight:400;color:var(--muted)">(click to select one or more)</span></label>
+        <div class="tax-grid" id="tax-cause-grid"></div>
+      </div>
+      </div>
+      <div class="form-group full">
+        <label>Caused By <span style="text-transform:none;font-weight:400;color:var(--muted)">(check all that apply)</span></label>
+        <div class="check-grid" id="f-causedby-grid"></div>
+      </div>
+      <div class="form-group full">
+        <label>Platform <span style="text-transform:none;font-weight:400;color:var(--muted)">(check all that apply)</span></label>
+        <div class="check-grid" id="f-platform-grid"></div>
+      </div>
+      <div class="form-group">
+        <label>Finance · Payment Status</label>
+        <select class="form-select" id="f-finance">
+          <option value="N/A">N/A</option>
+          <option value="Needs Review">Needs Review</option>
+          <option value="Paid">Paid</option>
+          <option value="Received">Received</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select class="form-select" id="f-status-in">
+          <option>Pending</option>
+          <option>Dispute</option>
+          <option>Accepted</option>
+          <option>Review</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Dispute Deadline</label>
+        <input type="date" id="f-deadline">
+      </div>
+      <div class="form-group full">
+        <label>Non-Refundable Taxes</label>
+        <div class="tax-grid" id="f-taxes-grid"></div>
+        <div style="margin-top:6px"><button type="button" class="tax-add-btn" onclick="promptAddTax()">+ Add new tax code</button></div>
+      </div>
+      <div class="form-group full">
+        <label>Notes</label>
+        <textarea id="f-notes" placeholder="Any relevant notes, context, or dispute references…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveADM()">Save ADM</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload / Import Modal -->
+<div class="modal-bg" id="upload-modal" style="display:none">
+  <div class="modal" style="max-width:780px">
+    <div class="modal-header">
+      <div class="modal-title">Import ADM File</div>
+      <button class="close-btn" onclick="closeUploadModal()">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Upload screenshots, PDFs or CSV files. AI extracts ADM Number, Issue Date, Airline Code and Amount automatically. (Running locally? You'll be prompted for an Anthropic API key once — stored only in your browser.)</p>
+
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()"
+         ondragover="event.preventDefault();this.classList.add('drag')"
+         ondragleave="this.classList.remove('drag')"
+         ondrop="handleDrop(event)">
+      <div class="upload-zone-icon">📂</div>
+      <div class="upload-zone-text">Click to browse or drag & drop your files here</div>
+      <div class="upload-zone-sub">Screenshots (PNG/JPG) • PDF • CSV • Multiple files supported</div>
+    </div>
+    <input type="file" id="file-input" accept=".pdf,.csv,.txt,.png,.jpg,.jpeg,.webp" multiple onchange="handleFileSelect(event)">
+
+    <div id="pdf-raw-wrap" style="display:none;margin-top:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;color:var(--muted)">Extracted PDF text (for debugging)</span>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pdf-raw-wrap').style.display='none'">Hide</button>
+      </div>
+      <pre id="pdf-raw-text" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;font-family:var(--mono);color:var(--muted);max-height:160px;overflow-y:auto;white-space:pre-wrap;word-break:break-word"></pre>
+    </div>
+
+    <!-- Image session: accumulate multiple screenshots then analyse together -->
+    <div id="img-session" style="display:none;margin-top:14px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Queued screenshots — AI will read all of them together as one ADM record</div>
+      <div id="img-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('file-input').click()">+ Add more screenshots</button>
+        <button class="btn btn-primary btn-sm" id="analyse-btn" onclick="analyseImages()">🔍 Extract data with AI</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearImageSession()" style="color:var(--danger);border-color:rgba(239,68,68,0.3)">Clear</button>
+      </div>
+    </div>
+
+    <div id="parse-status" style="display:none"></div>
+    <div id="parse-preview" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px">
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Parsed records — review & select to import</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pdf-raw-wrap').style.display=document.getElementById('pdf-raw-wrap').style.display==='none'?'block':'none'">Show PDF text</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleSelectAll()">Select all</button>
+          <span id="sel-count" style="font-size:12px;color:var(--muted);align-self:center"></span>
+        </div>
+      </div>
+      <div class="parse-table-wrap">
+        <table class="parse-table">
+          <thead><tr>
+            <th style="width:32px"></th>
+            <th>ADM Number</th>
+            <th>Issue Date</th>
+            <th>Reporting Date</th>
+            <th>Airline Code</th>
+            <th>Orig Amount</th>
+            <th>Currency</th>
+            <th>USD Amount</th>
+            <th>FX Rate</th>
+          </tr></thead>
+          <tbody id="parse-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeUploadModal()">Cancel</button>
+      <button class="btn btn-primary" id="import-btn" onclick="importSelected()" style="display:none">Import Selected</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+let allADMs = [];
+async function logout(){ await fetch("/api/logout",{method:"POST",credentials:"include"}); location.href="/login"; }
+let editingId = null;
+let parsedRows = [];
+
+// ── Bootstrap ──────────────────────────────────────────────
+let allReasons = [];
+let allTaxes   = [];     // [{code, description}]
+let selectedTaxes = new Set();   // current form selection
+
+window.onload = function() {
+  loadReasons();
+  loadTaxes();
+  loadADMs();
+};
+
+// ── Reasons (dynamic, server-backed) ──────────────────────────
+async function loadReasons() {
+  try {
+    const r = await fetch('/api/reasons', { credentials: 'include' });
+    if (!r.ok) return;
+    allReasons = await r.json();
+    renderReasonDropdowns();
+  } catch (e) { console.error(e); }
+}
+
+function renderReasonDropdowns() {
+  const filter = document.getElementById('f-reason');
+  const formSel = document.getElementById('f-reason-in');
+  if (filter) {
+    const cur = filter.value;
+    filter.innerHTML = '<option value="">All reasons</option>' +
+      allReasons.map(r => `<option>${esc(r)}</option>`).join('');
+    filter.value = cur;
+  }
+  if (formSel) {
+    const cur = formSel.value;
+    formSel.innerHTML = '<option value="">Select reason</option>' +
+      allReasons.map(r => `<option>${esc(r)}</option>`).join('') +
+      '<option value="__add__" style="font-style:italic;color:#7DBC2A">+ Add new reason…</option>';
+    formSel.value = cur;
+  }
+}
+
+function onReasonChange(sel) {
+  if (sel.value === '__add__') {
+    sel.value = '';
+    promptAddReason();
+  }
+}
+
+async function promptAddReason() {
+  const name = prompt('New reason name:');
+  if (!name) return;
+  const clean = name.trim();
+  if (!clean) return;
+  try {
+    const r = await fetch('/api/reasons', { method: 'POST', credentials: 'include',
+      headers: {'content-type':'application/json'}, body: JSON.stringify({ name: clean }) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    if (allReasons.indexOf(clean) === -1) allReasons.push(clean);
+    renderReasonDropdowns();
+    const formSel = document.getElementById('f-reason-in');
+    if (formSel) formSel.value = clean;
+    showToast('Reason "' + clean + '" added', 'success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+// ── Taxes (dynamic, server-backed) ──────────────────────────
+async function loadTaxes() {
+  try {
+    const r = await fetch('/api/taxes', { credentials: 'include' });
+    if (!r.ok) return;
+    allTaxes = await r.json();
+    renderTaxesGrid();
+  } catch (e) { console.error(e); }
+}
+
+function renderTaxesGrid() {
+  const grid = document.getElementById('f-taxes-grid');
+  if (!grid) return;
+  if (!allTaxes.length) {
+    grid.innerHTML = '<span style="font-size:12px;color:var(--muted)">No tax codes loaded.</span>';
+    return;
+  }
+  grid.innerHTML = allTaxes.map(t => {
+    const on = selectedTaxes.has(t.code) ? ' on' : '';
+    return `<span class="tax-chip${on}" data-code="${esc(t.code)}" onclick="toggleTax('${esc(t.code)}')" title="${esc(t.description||'')}">
+      <span class="tax-chip-title">${esc(t.code)}</span>
+      <span style="opacity:0.75;font-size:11px">${esc(t.description||'').slice(0,30)}${(t.description||'').length>30?'…':''}</span>
+    </span>`;
+  }).join('');
+}
+
+function toggleTax(code) {
+  if (selectedTaxes.has(code)) selectedTaxes.delete(code);
+  else selectedTaxes.add(code);
+  renderTaxesGrid();
+}
+
+const CAUSEDBY_OPTIONS = ['Agent','Internal Configuration','Discarded','Airline','GDS','Wenrix'];
+const PLATFORM_OPTIONS = ['Wego','WegoPro'];
+let selectedCausedBy = new Set();
+let selectedPlatform = new Set();
+
+function renderCheckGrid(containerId, options, selectedSet) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = options.map(opt => {
+    const on = selectedSet.has(opt) ? ' on' : '';
+    return `<span class="check-chip${on}" onclick="toggleCheck('${containerId}','${esc(opt)}')">
+      <span class="check-chip-mark">${selectedSet.has(opt)?'✓':''}</span>${esc(opt)}
+    </span>`;
+  }).join('');
+}
+
+function toggleCheck(containerId, value) {
+  const set = (containerId === 'f-causedby-grid') ? selectedCausedBy
+            : (containerId === 'f-platform-grid') ? selectedPlatform
+            : null;
+  if (!set) return;
+  if (set.has(value)) set.delete(value); else set.add(value);
+  if (containerId === 'f-causedby-grid') renderCheckGrid('f-causedby-grid', CAUSEDBY_OPTIONS, selectedCausedBy);
+  else                                    renderCheckGrid('f-platform-grid', PLATFORM_OPTIONS, selectedPlatform);
+}
+
+function renderCausedByCell(raw) {
+  if (!raw) return '<span style="color:var(--muted)">—</span>';
+  const arr = String(raw).split(',').map(s => s.trim()).filter(Boolean);
+  if (!arr.length) return '<span style="color:var(--muted)">—</span>';
+  return '<span class="causedby-cell">' + arr.map(c => '<span class="badge">' + esc(c) + '</span>').join(' ') + '</span>';
+}
+
+function renderPlatformCell(platform, wenrix, wegopro) {
+  // New 'platform' field takes priority; fall back to legacy wenrix/wegopro Yes flags
+  let arr = [];
+  if (platform) arr = String(platform).split(',').map(s => s.trim()).filter(Boolean);
+  else {
+    if (wenrix === 'Yes')  arr.push('Wenrix');
+    if (wegopro === 'Yes') arr.push('WegoPro');
+  }
+  if (!arr.length) return '<span style="color:var(--muted)">—</span>';
+  return '<span class="platform-cell">' + arr.map(c => '<span class="badge">' + esc(c) + '</span>').join(' ') + '</span>';
+}
+
+async function promptAddTax() {
+  const code = prompt('New tax code (e.g. WK):');
+  if (!code) return;
+  const cleanCode = code.trim().toUpperCase();
+  if (!cleanCode) return;
+  const desc = prompt('Description for ' + cleanCode + ' (optional):') || '';
+  try {
+    const r = await fetch('/api/taxes', { method: 'POST', credentials: 'include',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify({ code: cleanCode, description: desc.trim() }) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    if (!allTaxes.find(t => t.code === cleanCode)) allTaxes.push({ code: cleanCode, description: desc.trim() });
+    selectedTaxes.add(cleanCode);
+    renderTaxesGrid();
+    showToast('Tax "' + cleanCode + '" added', 'success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+function renderMultiCell(raw, cls) {
+  if (!raw) return '<span style="color:var(--muted)">—</span>';
+  const arr = String(raw).split(/[,;]/).map(s => s.trim()).filter(Boolean);
+  if (!arr.length) return '<span style="color:var(--muted)">—</span>';
+  if (arr.length === 1) return '<span class="' + (cls||'') + '">' + esc(arr[0]) + '</span>';
+  return '<span class="multi-cell">' + arr.map(t => '<span class="badge mono-badge">' + esc(t) + '</span>').join(' ') + '</span>';
+}
+
+function renderTaxCell(raw) {
+  if (!raw) return '<span style="color:var(--muted)">—</span>';
+  const arr = String(raw).split(',').map(s => s.trim()).filter(Boolean);
+  if (!arr.length) return '<span style="color:var(--muted)">—</span>';
+  return '<span class="tax-cell">' + arr.map(c => '<span class="badge">' + esc(c) + '</span>').join(' ') + '</span>';
+}
+
+async function loadADMs() {
+  try {
+    const r = await fetch('/api/adms', { credentials: 'include' });
+    if (r.status === 401) { location.href = '/login'; return; }
+    if (r.status === 403) { location.href = '/login?status=pending'; return; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    allADMs = await r.json();
+    populateFilters(); renderTable(); updateMetrics();
+  } catch (e) { showToast('Load failed: ' + e.message, 'error'); }
+}
+
+function localSave_() {}
+
+// ── Metrics ────────────────────────────────────────────────
+function updateMetrics() {
+  const visible = getFiltered();
+  document.getElementById('m-total').textContent = visible.length;
+  const total = visible.reduce((s, a) => s + (parseFloat(a.amount) || 0), 0);
+  document.getElementById('m-amount').textContent = total.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('m-dispute').textContent = visible.filter(a => a.status === 'Dispute').length;
+  document.getElementById('m-pending').textContent = visible.filter(a => a.status === 'Pending').length;
+  document.getElementById('m-accepted').textContent = visible.filter(a => a.status === 'Accepted').length;
+  document.getElementById('m-finance-review').textContent = visible.filter(a => a.finance === 'Needs Review').length;
+}
+
+// ── Filters ────────────────────────────────────────────────
+function populateFilters() {
+  const airlines = [...new Set(allADMs.map(a => a.airline).filter(Boolean))].sort();
+  const sel = document.getElementById('f-airline');
+  sel.innerHTML = '<option value="">All airlines</option>';
+  airlines.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; sel.appendChild(o); });
+}
+
+function getFiltered() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const status = document.getElementById('f-status').value;
+  const airline = document.getElementById('f-airline').value;
+  const reason = document.getElementById('f-reason').value;
+  const fin = document.getElementById('f-finance-filter').value;
+  return allADMs.filter(a => {
+    if (status && a.status !== status) return false;
+    if (airline && a.airline !== airline) return false;
+    if (reason && a.reason !== reason) return false;
+    if (fin && (a.finance || 'N/A') !== fin) return false;
+    if (q) {
+      const haystack = [a.ticket, a.pnr, a.airline, a.supplier, a.notes, a.reason].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+// ── Table render ───────────────────────────────────────────
+function renderTable() {
+  updateMetrics();
+  const data = getFiltered();
+  const container = document.getElementById('table-container');
+  if (!data.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><h3>No ADMs found</h3><p>Try adjusting your filters or add a new ADM.</p></div>';
+    return;
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const rows = data.map(a => {
+    const statusClass = {Dispute:'badge-dispute', Accepted:'badge-accepted', Pending:'badge-pending', Review:'badge-review'}[a.status] || 'badge-pending';
+    const deadlineHtml = formatDeadline(a.deadline, today);
+    return `<tr>
+      <td>${renderMultiCell(a.ticket, 'mono')}</td>
+      <td>${renderMultiCell(a.pnr, 'mono')}</td>
+      <td>${esc(a.airline) || '—'}</td>
+      <td>${esc(a.received) || '—'}</td>
+      <td class="amount">${a.amount ? parseFloat(a.amount).toLocaleString('en-US',{minimumFractionDigits:2}) + ' ' + esc(a.currency) : '—'}</td>
+      <td>${esc(a.reason) || '—'}</td>
+      <td>${renderCausedByCell(a.causedby)}</td>
+      <td>${renderPlatformCell(a.platform, a.wenrix, a.wegopro)}</td>
+      <td>${renderTaxCell(a.nrTaxes)}</td>
+      <td><span class="badge ${statusClass}">${esc(a.status)}</span></td>
+      <td>${financeBadge(a.finance)}</td>
+      <td>${deadlineHtml}</td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-ghost btn-sm" onclick="editADM('${a.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteADM('${a.id}')">Del</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  container.innerHTML = `<table>
+    <thead><tr>
+      <th>Ticket No</th><th>PNR</th><th>Airline</th><th>Received</th>
+      <th>Amount</th><th>Reason</th><th>Caused By</th>
+      <th>Platform</th><th>Taxes</th><th>Status</th><th>Payment</th><th>Deadline</th><th>Actions</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function financeBadge(v) {
+  v = v || 'N/A';
+  const cls = {
+    'Paid':         'badge-paid',
+    'Received':     'badge-received',
+    'Needs Review': 'badge-needs-review'
+  }[v] || 'badge-na';
+  return '<span class="badge ' + cls + '">' + esc(v) + '</span>';
+}
+
+function formatDeadline(dl, today) {
+  if (!dl) return '—';
+  const d = new Date(dl); d.setHours(0,0,0,0);
+  const diff = Math.round((d - today) / 86400000);
+  if (diff < 0) return `<span class="overdue">⚠ ${dl}</span>`;
+  if (diff <= 5) return `<span class="due-soon">🕐 ${dl}</span>`;
+  return dl;
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Modal ──────────────────────────────────────────────────
+function openModal(adm) {
+  editingId = adm ? adm.id : null;
+  document.getElementById('modal-title').textContent = adm ? 'Edit ADM' : 'Add ADM';
+  const fields = ['received','issued','airline','supplier','gds','pcc','ticket','pnr','amount','currency','reason','causedby','wenrix','wegopro','finance','status','deadline','notes'];
+  fields.forEach(f => {
+    const el = document.getElementById('f-' + (f === 'airline' ? 'airline-in' : f === 'reason' ? 'reason-in' : f === 'status' ? 'status-in' : f));
+    if (el) el.value = adm ? (adm[f] || '') : (f === 'currency' ? 'USD' : f === 'status' ? 'Pending' : f === 'wenrix' || f === 'wegopro' ? 'No' : f === 'finance' ? 'N/A' : '');
+  });
+  // Populate selected taxes from row
+  selectedTaxes = new Set();
+  if (adm && adm.nrTaxes) {
+    String(adm.nrTaxes).split(',').map(s => s.trim().toUpperCase()).filter(Boolean).forEach(c => selectedTaxes.add(c));
+  }
+  renderTaxesGrid();
+  // Populate Caused By
+  selectedCausedBy = new Set();
+  if (adm && adm.causedby) {
+    String(adm.causedby).split(',').map(s => s.trim()).filter(Boolean).forEach(v => selectedCausedBy.add(v));
+  }
+  renderCheckGrid('f-causedby-grid', CAUSEDBY_OPTIONS, selectedCausedBy);
+  // Populate Platform — prefer new field; fall back to legacy wenrix/wegopro Yes flags
+  selectedPlatform = new Set();
+  if (adm && adm.platform) {
+    String(adm.platform).split(',').map(s => s.trim()).filter(Boolean).forEach(v => selectedPlatform.add(v));
+  } else if (adm) {
+    if (adm.wenrix === 'Yes')  selectedPlatform.add('Wenrix');
+    if (adm.wegopro === 'Yes') selectedPlatform.add('WegoPro');
+  }
+  renderCheckGrid('f-platform-grid', PLATFORM_OPTIONS, selectedPlatform);
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; editingId = null; }
+
+function editADM(id) {
+  const adm = allADMs.find(a => a.id === id);
+  if (adm) openModal(adm);
+}
+
+async function saveADM() {
+  // Collect form values
+  const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const adm = {
+    id:       editingId || '',
+    received: val('f-received'),
+    issued:   val('f-issued'),
+    airline:  val('f-airline-in'),
+    supplier: val('f-supplier'),
+    gds:      val('f-gds'),
+    pcc:      val('f-pcc'),
+    ticket:   val('f-ticket'),
+    pnr:      val('f-pnr'),
+    amount:   val('f-amount'),
+    currency: val('f-currency') || 'USD',
+    reason:   val('f-reason-in'),
+    causedby: Array.from(selectedCausedBy || []).join(','),
+    platform: Array.from(selectedPlatform || []).join(','),
+    wenrix:   (selectedPlatform && selectedPlatform.has('Wenrix'))  ? 'Yes' : 'No',
+    wegopro:  (selectedPlatform && selectedPlatform.has('WegoPro')) ? 'Yes' : 'No',
+    finance:  val('f-finance') || 'N/A',
+    status:   val('f-status-in') || 'Pending',
+    deadline: val('f-deadline'),
+    notes:    val('f-notes'),
+    nrTaxes:  Array.from(selectedTaxes || []).join(','),
+    taxCauses: Array.from(selectedTaxCauses || []).join(',')
+  };
+  if (!adm.airline && !adm.ticket && !adm.amount) {
+    showToast('Add at least an airline, ticket no, or amount', 'error');
+    return;
+  }
+  closeModal();
+  try {
+    const r = await fetch('/api/adms', { method: 'POST', credentials: 'include',
+      headers: {'content-type':'application/json'}, body: JSON.stringify(adm) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    showToast(editingId ? 'ADM updated' : 'ADM added', 'success');
+    loadADMs();
+  } catch (e) { showToast('Save failed: ' + e.message, 'error'); }
+}
+
+async function deleteADM(id) {
+  if (!confirm('Delete this ADM? This cannot be undone.')) return;
+  try {
+    const r = await fetch('/api/adms/' + encodeURIComponent(id), { method: 'DELETE', credentials: 'include' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    showToast('ADM deleted', 'success');
+    loadADMs();
+  } catch (e) { showToast('Delete failed: ' + e.message, 'error'); }
+}
+
+// ── Export ─────────────────────────────────────────────────
+function exportCSV() {
+  const data = getFiltered();
+  if (!data.length) { showToast('No data to export', 'error'); return; }
+  const headers = ['ID','Received','Issued','Airline','Supplier','GDS','PCC','Ticket No','PNR','Amount','Currency','Reason','Caused By','Wenrix','WegoPro','Payment','Status','Deadline','Notes','NonRefundableTaxes','Platform'];
+  const rows = data.map(a => ['id','received','issued','airline','supplier','gds','pcc','ticket','pnr','amount','currency','reason','causedby','wenrix','wegopro','finance','status','deadline','notes','nrTaxes','platform','taxCauses'].map(k => '"' + (a[k]||'').replace(/"/g,'""') + '"').join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'adm_export_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exported', 'success');
+}
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(msg, type) {
+  const wrap = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type || '');
+  t.innerHTML = (type === 'success' ? '✅' : '❌') + ' ' + msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ════════════════════════════════════════════════════════════
+// UPLOAD & IMPORT FEATURE
+// ════════════════════════════════════════════════════════════
+
+function openUploadModal() {
+  parsedRows = [];
+  imageSession = [];
+  document.getElementById('upload-modal').style.display = 'flex';
+  document.getElementById('parse-status').style.display = 'none';
+  document.getElementById('parse-preview').style.display = 'none';
+  document.getElementById('import-btn').style.display = 'none';
+  document.getElementById('img-session').style.display = 'none';
+  document.getElementById('pdf-raw-wrap').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  document.getElementById('upload-zone').classList.remove('drag');
+}
+function closeUploadModal() { document.getElementById('upload-modal').style.display = 'none'; }
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  const files = Array.from(e.dataTransfer.files);
+  if (files.length) processFiles(files);
+}
+function handleFileSelect(e) {
+  const files = Array.from(e.target.files);
+  if (files.length) processFiles(files);
+}
+
+async function processFiles(files) {
+  const imageExts = ['png','jpg','jpeg','webp','gif'];
+  const images = files.filter(f => imageExts.includes(f.name.split('.').pop().toLowerCase()));
+  const others  = files.filter(f => !imageExts.includes(f.name.split('.').pop().toLowerCase()));
+
+  // Images go into the session queue — user can add more before analysing
+  if (images.length) {
+    await addImagesToSession(images);
+  }
+
+  // Process non-image files immediately
+  if (others.length) {
+    parsedRows = [];
+    document.getElementById('parse-preview').style.display = 'none';
+    document.getElementById('import-btn').style.display = 'none';
+    document.getElementById('pdf-raw-wrap').style.display = 'none';
+    setParseStatus('loading', `Processing ${others.length} file${others.length>1?'s':''}…`);
+
+    for (const file of others) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      try {
+        if (ext === 'pdf') {
+          setParseStatus('loading', `Reading PDF: ${file.name}…`);
+          const rows = await parsePDF(file);
+          parsedRows.push(...rows);
+        } else if (ext === 'csv' || ext === 'txt') {
+          setParseStatus('loading', `Reading CSV: ${file.name}…`);
+          const text = await readFileAsText(file);
+          const rows = parseCSV(text);
+          parsedRows.push(...rows);
+        }
+      } catch(err) {
+        setParseStatus('error', `Error reading ${file.name}: ${err.message}`);
+        return;
+      }
+    }
+
+    if (!parsedRows.length) {
+      setParseStatus('error', 'No ADM records found. For images/screenshots use the image queue above.');
+      return;
+    }
+    setParseStatus('loading', `Found ${parsedRows.length} record${parsedRows.length>1?'s':''} — fetching exchange rates…`);
+    fetchAllFXRates(parsedRows);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// IMAGE SESSION — queue screenshots, analyse together
+// ════════════════════════════════════════════════════════════
+let imageSession = []; // [{file, b64, mediaType}]
+
+async function addImagesToSession(files) {
+  for (const file of files) {
+    const b64 = await fileToBase64(file);
+    const mediaType = file.type || 'image/png';
+    imageSession.push({ name: file.name, b64, mediaType });
+  }
+  renderImageThumbs();
+  document.getElementById('img-session').style.display = 'block';
+  document.getElementById('parse-status').style.display = 'none';
+}
+
+function renderImageThumbs() {
+  const wrap = document.getElementById('img-thumbs');
+  wrap.innerHTML = imageSession.map((img, i) => `
+    <div style="position:relative;display:inline-block">
+      <img src="data:${img.mediaType};base64,${img.b64}" style="height:72px;width:auto;max-width:140px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)">
+      <button onclick="removeImage(${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--danger);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${img.name}</div>
+    </div>`).join('');
+}
+
+function removeImage(i) {
+  imageSession.splice(i, 1);
+  if (!imageSession.length) clearImageSession();
+  else renderImageThumbs();
+}
+
+function clearImageSession() {
+  imageSession = [];
+  document.getElementById('img-session').style.display = 'none';
+  document.getElementById('file-input').value = '';
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result.split(',')[1]);
+    r.onerror = () => rej(new Error('Could not read image'));
+    r.readAsDataURL(file);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// AI IMAGE EXTRACTION — calls Anthropic API with all images
+// ════════════════════════════════════════════════════════════
+async function analyseImages() {
+  if (!imageSession.length) return;
+  document.getElementById('analyse-btn').disabled = true;
+  setParseStatus('loading', 'AI is reading your screenshots…');
+
+  // Build content array: all images + instruction
+  const content = [];
+  imageSession.forEach((img, i) => {
+    content.push({
+      type: 'image',
+      source: { type: 'base64', media_type: img.mediaType, data: img.b64 }
+    });
+    content.push({ type: 'text', text: `Image ${i+1}: ${img.name}` });
+  });
+
+  content.push({
+    type: 'text',
+    text: `These are screenshots from a BSP airline portal showing ADM (Agency Debit Memo) records.
+
+Extract ALL of the following fields from ALL images combined. The images may show different parts of the SAME ADM record (e.g. one shows the header with ADM number/amount, another shows the airline info section).
+
+Return ONLY a valid JSON array. Each element represents one ADM record with these exact keys:
+{
+  "admNum": "the ADM number exactly as shown (e.g. 0630100031)",
+  "issueDate": "ISO format YYYY-MM-DD (convert from DD/MM/YYYY if needed)",
+  "reportDate": "reporting date in YYYY-MM-DD, use issueDate if not visible",
+  "airlineCode": "ONLY the numeric digits of the airline code (e.g. if you see '257 / Austrian' return '257', if you see 'EK/176' return '176')",
+  "amount": the numeric amount as a number (e.g. 66.622),
+  "currency": "3-letter currency code (e.g. BHD, USD, AED)"
+}
+
+Rules:
+- If multiple images show parts of the same ADM (same ADM number), merge them into ONE record
+- airlineCode must be DIGITS ONLY — strip all letters and slashes
+- If a field is not visible in any image, use null
+- Return ONLY the JSON array, no explanation, no markdown fences`
+  });
+
+  try {
+    const payload = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content }]
+    };
+
+    const data = await callAI(payload);
+    if (data.error) throw new Error(data.error);
+
+    const rawText = data.content.find(b => b.type === 'text')?.text || '';
+    // Strip any accidental markdown fences
+    const jsonStr = rawText.replace(/```json|```/gi, '').trim();
+    const extracted = JSON.parse(jsonStr);
+
+    if (!Array.isArray(extracted) || !extracted.length) throw new Error('No records found in images');
+
+    // Merge with any existing parsedRows from PDFs/CSVs
+    const newRows = extracted.map(r => ({
+      admNum:      r.admNum    || 'UNKNOWN',
+      issueDate:   normaliseDate(r.issueDate  || '') || '',
+      reportDate:  normaliseDate(r.reportDate || '') || normaliseDate(r.issueDate || '') || '',
+      airlineCode: String(r.airlineCode || '').replace(/\D/g,''),
+      amount:      parseFloat(r.amount) || 0,
+      currency:    (r.currency || 'USD').toUpperCase().slice(0,3),
+      usd: null, fxRate: null, _sel: true
+    }));
+
+    parsedRows.push(...newRows);
+    clearImageSession();
+    setParseStatus('loading', `AI extracted ${newRows.length} record${newRows.length>1?'s':''} — fetching exchange rates…`);
+    fetchAllFXRates(parsedRows);
+
+  } catch(err) {
+    setParseStatus('error', 'AI extraction failed: ' + err.message + '. Check your screenshots and try again.');
+  } finally {
+    document.getElementById('analyse-btn').disabled = false;
+  }
+}
+
+function readFileAsText(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = () => rej(new Error('Could not read file'));
+    r.readAsText(file);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// PDF PARSER — BSP/IATA format with AI fallback
+// ════════════════════════════════════════════════════════════
+async function parsePDF(file) {
+  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfData = new Uint8Array(arrayBuffer);
+  const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+
+  // Extract text preserving line order
+  let fullText = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    const items = content.items.slice().sort((a,b) => {
+      const dy = Math.round(b.transform[5]) - Math.round(a.transform[5]);
+      return dy !== 0 ? dy : a.transform[4] - b.transform[4];
+    });
+    let lastY = null;
+    for (const item of items) {
+      const y = Math.round(item.transform[5]);
+      if (lastY !== null && Math.abs(y - lastY) > 3) fullText += '\n';
+      fullText += item.str + ' ';
+      lastY = y;
+    }
+    fullText += '\n--- PAGE BREAK ---\n';
+  }
+
+  // Show raw text for debugging
+  document.getElementById('pdf-raw-text').textContent = fullText.slice(0, 5000) + (fullText.length > 5000 ? '\n…(truncated)' : '');
+
+  // Try BSP-specific extraction first
+  const rows = extractBSPFields(fullText);
+
+  if (rows.length && rows[0].admNum && rows[0].admNum !== 'UNKNOWN' && rows[0].amount > 0) {
+    return rows;
+  }
+
+  // Fallback: send PDF pages as images to AI vision API
+  setParseStatus('loading', 'Sending PDF to AI for accurate extraction…');
+  return await parsePDFWithAI(pdf, file.name);
+}
+
+// ────────────────────────────────────────────────────────────
+// BSP-SPECIFIC FIELD EXTRACTOR
+// Targets the exact label→value pattern in IATA BSP PDFs:
+//   "Document Number\n0630100031"
+//   "Period - Reporting Date\n2026031 08/03/2026"
+//   "Airline Code / Name 257 / Austrian"
+//   "0630100031 Issued BAHRAIN (BH) 0721039 Issue 20/02/2026 66.622"
+// ────────────────────────────────────────────────────────────
+function extractBSPFields(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const fullFlat = lines.join('\n');
+
+  // ── 1. ADM / Document Number ──────────────────────────────
+  // Label on one line, value on next — or inline after label
+  let admNum = '';
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    // "Document Number" label followed by value on next line
+    if (/^document\s*number$/i.test(l) && lines[i+1]) {
+      admNum = lines[i+1].match(/(\d{8,12})/)?.[1] || '';
+      if (admNum) break;
+    }
+    // "ADM Number" label then value on next line
+    if (/^adm\s*number$/i.test(l) && lines[i+1]) {
+      admNum = lines[i+1].match(/(\d{8,12})/)?.[1] || '';
+      if (admNum) break;
+    }
+    // Inline: "ADM Number 0630100031" or "Document Number 0630100031"
+    const inlineM = l.match(/(?:document|adm)\s*number\s+(\d{8,12})/i);
+    if (inlineM) { admNum = inlineM[1]; break; }
+  }
+
+  // ── 2. Issue Date ─────────────────────────────────────────
+  // In the summary row: "0630100031 Issued BAHRAIN ... Issue 20/02/2026 66.622"
+  // Or label "Issue Date" / "Issue Date\n20/02/2026"
+  let issueDate = '';
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (/^issue\s*date$/i.test(l) && lines[i+1]) {
+      issueDate = normaliseDate(lines[i+1].trim());
+      if (issueDate) break;
+    }
+    const inline = l.match(/issue\s*date\s+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i);
+    if (inline) { issueDate = normaliseDate(inline[1]); if (issueDate) break; }
+  }
+  // Fallback: look in the summary data row (last line containing ADM number + date + amount)
+  if (!issueDate && admNum) {
+    for (const line of lines) {
+      if (line.includes(admNum)) {
+        const dates = [...line.matchAll(/(\d{1,2}\/\d{1,2}\/\d{4})/g)].map(m => normaliseDate(m[1])).filter(Boolean);
+        if (dates.length) { issueDate = dates[0]; break; }
+      }
+    }
+  }
+
+  // ── 3. Reporting Date ─────────────────────────────────────
+  // "Period - Reporting Date\n2026031 08/03/2026"  → 08/03/2026
+  // or inline "2026031 08/03/2026"
+  let reportDate = '';
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (/period.*reporting\s*date/i.test(l)) {
+      // Value might be on same line or next line
+      const search = l + ' ' + (lines[i+1] || '');
+      const m = search.match(/\d{7}\s+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/);
+      if (m) { reportDate = normaliseDate(m[1]); break; }
+      // Or just a date
+      const m2 = search.match(/(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/);
+      if (m2) { reportDate = normaliseDate(m2[1]); break; }
+    }
+  }
+  if (!reportDate) reportDate = issueDate;
+
+  // ── 4. Airline Code — DIGITS ONLY ────────────────────────
+  // "Airline Code / Name 257 / Austrian"  → 257
+  // "Airline Code / Name\n257 / Austrian" → 257
+  let airlineCode = '';
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (/airline\s*code\s*[\/]?\s*name/i.test(l)) {
+      // Check same line first, then next line
+      const search = l + ' ' + (lines[i+1] || '');
+      const m = search.match(/airline\s*code\s*[\/]?\s*name\s+(\d{2,3})\s*[\/\s]/i);
+      if (m) { airlineCode = m[1]; break; }
+      // More permissive: first 2-3 digit number after label
+      const m2 = search.match(/(?:name)\s+(\d{2,3})/i);
+      if (m2) { airlineCode = m2[1]; break; }
+    }
+  }
+  // Fallback: "by Airline 257" pattern seen in BSP audit trail
+  if (!airlineCode) {
+    const byAirline = fullFlat.match(/by\s+Airline\s+(\d{2,3})\b/i);
+    if (byAirline) airlineCode = byAirline[1];
+  }
+
+  // ── 5. Amount & Currency ─────────────────────────────────
+  // Most reliable source: the summary data row
+  // "0630100031 Issued BAHRAIN (BH) 0721039 Issue 20/02/2026 66.622"
+  // Also: "Total, BHD 0.000 66.622 66.622" → take rightmost non-zero column
+  // Also: "Amount, BHD" label with value nearby
+  let amount = 0;
+  let currency = '';
+
+  // Try: "Amount, CCC" column header pattern — the value follows on same or next line
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    const amtLabel = l.match(/amount[,\s]+([A-Z]{3})/i);
+    if (amtLabel) {
+      currency = amtLabel[1].toUpperCase();
+      // Value might be on same line after the currency, or next line
+      const afterLabel = l.replace(/amount[,\s]+[A-Z]{3}/i, '').trim();
+      const valM = afterLabel.match(/([\d,]+\.?\d*)/);
+      if (valM) { amount = parseFloat(valM[1].replace(/,/g,'')); break; }
+      if (lines[i+1]) {
+        const nextM = lines[i+1].match(/([\d,]+\.?\d*)/);
+        if (nextM) { amount = parseFloat(nextM[1].replace(/,/g,'')); break; }
+      }
+    }
+  }
+
+  // Try: summary row containing admNum — last number on the line is the amount
+  if ((!amount || !currency) && admNum) {
+    for (const line of lines) {
+      if (line.includes(admNum) && line.length > 20) {
+        // Extract all decimal numbers from this line
+        const nums = [...line.matchAll(/\b(\d+\.\d+)\b/g)].map(m => parseFloat(m[1]));
+        if (nums.length) { amount = nums[nums.length - 1]; }
+        // Currency: look for 3-letter code on same line
+        const curr = line.match(/\b(BHD|USD|AED|EUR|GBP|SAR|QAR|KWD|OMR|SGD|INR)\b/i);
+        if (curr) currency = curr[1].toUpperCase();
+        if (amount) break;
+      }
+    }
+  }
+
+  // Try: "Total, BHD 0.000 66.622 66.622" — Airline Input column (2nd value)
+  if (!amount) {
+    for (const line of lines) {
+      const totalM = line.match(/total[,\s]+([A-Z]{3})\s+([\d.]+)\s+([\d.]+)/i);
+      if (totalM) {
+        const v1 = parseFloat(totalM[2]), v2 = parseFloat(totalM[3]);
+        amount = v2 > v1 ? v2 : (v1 > 0 ? v1 : v2);
+        if (!currency) currency = totalM[1].toUpperCase();
+        break;
+      }
+    }
+  }
+
+  // Currency fallback
+  if (!currency) {
+    const currM = fullFlat.match(/\b(BHD|AED|SAR|QAR|KWD|OMR|USD|EUR|GBP|SGD)\b/);
+    if (currM) currency = currM[1].toUpperCase();
+    else currency = 'USD';
+  }
+
+  if (!admNum && amount === 0) return [];
+
+  return [{
+    admNum:      admNum || 'UNKNOWN',
+    issueDate:   issueDate || '',
+    reportDate:  reportDate || issueDate || '',
+    airlineCode: airlineCode,
+    amount:      amount,
+    currency:    currency,
+    usd: null, fxRate: null, _sel: true
+  }];
+}
+
+// ────────────────────────────────────────────────────────────
+// AI VISION FALLBACK for PDFs — renders pages to canvas, sends as images
+// ────────────────────────────────────────────────────────────
+async function parsePDFWithAI(pdf, fileName) {
+  const imageContents = [];
+
+  for (let p = 1; p <= Math.min(pdf.numPages, 3); p++) {
+    const page = await pdf.getPage(p);
+    const viewport = page.getViewport({ scale: 1.5 });
+    const canvas = document.createElement('canvas');
+    canvas.width  = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    const b64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+    imageContents.push({
+      type: 'image',
+      source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
+    });
+    imageContents.push({ type: 'text', text: `PDF page ${p} of ${fileName}` });
+  }
+
+  imageContents.push({
+    type: 'text',
+    text: `This is a BSP IATA ADM (Agency Debit Memo) document. Extract ONLY these fields:
+
+Return ONLY a valid JSON array with one object per ADM record:
+{
+  "admNum": "ADM/Document Number — exact digits shown (e.g. 0630100031)",
+  "issueDate": "Issue Date in YYYY-MM-DD format",
+  "reportDate": "Reporting Date in YYYY-MM-DD format (from Period/Reporting Date field)",
+  "airlineCode": "Airline Code digits ONLY — e.g. if you see '257 / Austrian' return '257'",
+  "amount": the final total amount as a number (e.g. 66.622) — take it from 'Amount, BHD' or the summary row, NOT from individual ticket amounts,
+  "currency": "3-letter currency code from the Amount field header (e.g. BHD)"
+}
+
+CRITICAL rules:
+- admNum: take ONLY from the 'ADM Number' or 'Document Number' field — NOT from ticket numbers or period codes
+- amount: take from 'Amount, BHD/USD/etc' in the top header row, or Total row showing Airline Input column — do NOT sum ticket amounts
+- airlineCode: digits only, from 'Airline Code / Name' field
+- Return ONLY the JSON array, no markdown, no explanation`
+  });
+
+  const payload = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 800,
+    messages: [{ role: 'user', content: imageContents }]
+  };
+
+  const data = await callAI(payload);
+  if (data.error) throw new Error(data.error);
+
+  const rawText = data.content.find(b => b.type === 'text')?.text || '';
+  const jsonStr = rawText.replace(/```json|```/gi, '').trim();
+  const extracted = JSON.parse(jsonStr);
+
+  return extracted.map(r => ({
+    admNum:      r.admNum || 'UNKNOWN',
+    issueDate:   normaliseDate(r.issueDate  || '') || '',
+    reportDate:  normaliseDate(r.reportDate || '') || normaliseDate(r.issueDate || '') || '',
+    airlineCode: String(r.airlineCode || '').replace(/\D/g, ''),
+    amount:      parseFloat(r.amount) || 0,
+    currency:    (r.currency || 'USD').toUpperCase().slice(0,3),
+    usd: null, fxRate: null, _sel: true
+  }));
+}
+
+// ── CSV Parser ─────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) throw new Error('File appears empty or has no data rows.');
+
+  const parsed = lines.map(line => parseCSVLine(line));
+  const headers = parsed[0].map(h => h.toLowerCase().trim());
+  const dataRows = parsed.slice(1);
+
+  const col = (names) => {
+    for (const n of names) {
+      const i = headers.findIndex(h => h.includes(n));
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+
+  const iADM      = col(['adm number','adm no','adm_number','memo number','debit memo','adm ref','reference']);
+  const iIssue    = col(['issue date','issued date','issue_date','issuance','date of issue','adm date']);
+  const iReport   = col(['reporting date','report date','reporting_date','period','billing date','settlement date','transaction date']);
+  const iAirline  = col(['airline code','airline','carrier','iata code','airline_code','carrier code']);
+  const iAmount   = col(['amount','gross amount','total amount','adm amount','debit amount','net amount','value']);
+  const iCurrency = col(['currency','curr','ccy']);
+
+  const rows = [];
+  dataRows.forEach((cells, idx) => {
+    if (cells.length < 2) return;
+    const get = (i, fallbackPositions) => {
+      if (i >= 0 && i < cells.length) return cells[i].trim();
+      for (const p of fallbackPositions) { if (p < cells.length && cells[p].trim()) return cells[p].trim(); }
+      return '';
+    };
+
+    const admNum    = get(iADM,     [0, 1]);
+    const issueRaw  = get(iIssue,   [2, 3, 1]);
+    const reportRaw = get(iReport,  [3, 4, 2]);
+    const airlineRaw= get(iAirline, [1, 0]);
+    const amtRaw    = get(iAmount,  [4, 5, 6]);
+    const currRaw   = get(iCurrency,[5, 6, 7]);
+
+    if (!admNum && !amtRaw) return;
+    if (admNum.toLowerCase().includes('adm') && idx === 0) return;
+
+    const issueDate  = normaliseDate(issueRaw);
+    const reportDate = normaliseDate(reportRaw) || normaliseDate(issueRaw);
+    const airlineCode = extractAirlineDigits(airlineRaw);
+    const amount     = parseFloat(amtRaw.replace(/[,\s]/g,'')) || 0;
+    const currency   = (currRaw || 'USD').toUpperCase().replace(/[^A-Z]/g,'').slice(0,3) || 'USD';
+
+    rows.push({ admNum, issueDate, reportDate, airlineCode, amount, currency, usd: null, fxRate: null, _sel: true });
+  });
+
+  return rows;
+}
+
+function parseCSVLine(line) {
+  const cells = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if ((c === ',' || c === '\t') && !inQ) { cells.push(cur); cur = ''; }
+    else cur += c;
+  }
+  cells.push(cur);
+  return cells.map(c => c.replace(/^"|"$/g,'').trim());
+}
+
+function normaliseDate(raw) {
+  if (!raw) return '';
+  // Try YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  // Try DD/MM/YYYY or DD-MM-YYYY
+  let m = raw.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  // Try MM/DD/YYYY
+  m = raw.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+  if (m) { const yr = m[3].length===2?'20'+m[3]:m[3]; return `${yr}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`; }
+  // Try "Jan 2025" or "January 2025"
+  m = raw.match(/([A-Za-z]+)\s+(\d{4})/);
+  if (m) { const mo = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[1].toLowerCase().slice(0,3))+1; if (mo>0) return `${m[2]}-${String(mo).padStart(2,'0')}-01`; }
+  // Try ISO with time
+  m = raw.match(/(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
+  return '';
+}
+
+function extractAirlineDigits(raw) {
+  if (!raw) return '';
+  // Extract only digits from airline code (e.g. "EK/176" → "176", "176" → "176", "Emirates (EK)" → "")
+  const digits = raw.match(/\d+/);
+  return digits ? digits[0] : raw.replace(/[^A-Z0-9]/gi,'').toUpperCase();
+}
+
+// ── FX Conversion ──────────────────────────────────────────
+const fxCache = {};
+
+async function fetchAllFXRates(rows) {
+  // Group rows by currency+date to minimise API calls
+  const pairs = [...new Set(rows.filter(r => r.currency !== 'USD').map(r => r.currency + '|' + r.reportDate))];
+  let done = 0;
+
+  for (const pair of pairs) {
+    const [currency, date] = pair.split('|');
+    const key = currency + '|' + date;
+    if (!fxCache[key]) {
+      try {
+        const rate = await fetchFXRate(currency, date);
+        fxCache[key] = rate;
+      } catch(e) {
+        fxCache[key] = null;
+      }
+    }
+    done++;
+    setParseStatus('loading', `Fetching exchange rates… ${done}/${pairs.length}`);
+  }
+
+  // Apply rates
+  rows.forEach(r => {
+    if (r.currency === 'USD') {
+      r.usd = r.amount;
+      r.fxRate = 1;
+    } else {
+      const key = r.currency + '|' + r.reportDate;
+      const rate = fxCache[key];
+      if (rate) { r.usd = +(r.amount / rate).toFixed(2); r.fxRate = rate; }
+      else { r.usd = null; r.fxRate = null; }
+    }
+  });
+
+  setParseStatus('success', `${rows.length} records parsed successfully.`);
+  renderParsePreview();
+}
+
+async function fetchFXRate(currency, date) {
+  // Use frankfurter.app — free, no key required, historical rates
+  const dateStr = date || new Date().toISOString().slice(0,10);
+  const url = `https://api.frankfurter.app/${dateStr}?from=${currency}&to=USD`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('FX API error');
+  const data = await resp.json();
+  return data.rates && data.rates.USD ? data.rates.USD : null;
+}
+
+// ── Preview table ──────────────────────────────────────────
+function renderParsePreview() {
+  const tbody = document.getElementById('parse-tbody');
+  tbody.innerHTML = parsedRows.map((r, i) => `
+    <tr>
+      <td><input type="checkbox" class="parse-check" ${r._sel?'checked':''} onchange="parsedRows[${i}]._sel=this.checked;updateSelCount()"></td>
+      <td>${esc(r.admNum)||'—'}</td>
+      <td>${r.issueDate||'—'}</td>
+      <td>${r.reportDate||'—'}</td>
+      <td><span style="font-family:var(--mono);color:var(--info)">${esc(r.airlineCode)||'—'}</span></td>
+      <td style="color:var(--warning)">${r.amount?r.amount.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td>${esc(r.currency)}</td>
+      <td style="color:var(--success);font-weight:500">${r.usd!=null?'$'+r.usd.toLocaleString('en-US',{minimumFractionDigits:2}):'<span style="color:var(--muted)">N/A</span>'}</td>
+      <td>${r.fxRate!=null?'<span class="fx-badge">'+r.fxRate.toFixed(4)+'</span>':'<span style="color:var(--muted)">—</span>'}</td>
+    </tr>`).join('');
+  updateSelCount();
+  document.getElementById('parse-preview').style.display = 'block';
+  document.getElementById('import-btn').style.display = 'inline-flex';
+}
+
+function updateSelCount() {
+  const n = parsedRows.filter(r => r._sel).length;
+  document.getElementById('sel-count').textContent = n + ' selected';
+}
+
+function toggleSelectAll() {
+  const allSel = parsedRows.every(r => r._sel);
+  parsedRows.forEach(r => r._sel = !allSel);
+  renderParsePreview();
+}
+
+// ── Import selected into tracker ───────────────────────────
+function importSelected() {
+  const selected = parsedRows.filter(r => r._sel);
+  if (!selected.length) { showToast('No records selected', 'error'); return; }
+
+  selected.forEach(r => {
+    const adm = {
+      id: '',
+      received: r.reportDate || r.issueDate || '',
+      issued: r.issueDate || '',
+      airline: r.airlineCode || '',
+      supplier: '',
+      gds: '',
+      pcc: '',
+      ticket: r.admNum || '',
+      pnr: '',
+      amount: r.usd != null ? String(r.usd) : String(r.amount),
+      currency: 'USD',
+      reason: '',
+      causedby: '',
+      wenrix: 'No',
+      wegopro: 'No',
+      finance: 'N/A',
+      status: 'Pending',
+      deadline: '',
+      notes: r.currency !== 'USD' && r.fxRate
+        ? `Original: ${r.amount.toLocaleString('en-US',{minimumFractionDigits:2})} ${r.currency} @ ${r.fxRate} on ${r.reportDate}`
+        : '',
+    };
+    // Save via Apps Script backend
+    // Send to server via HTTP
+    fetch('/api/adms', { method: 'POST', credentials: 'include',
+      headers: {'content-type':'application/json'}, body: JSON.stringify(adm) }).catch(console.error);
+  });
+  // Server persists each save individually
+  closeUploadModal();
+  showToast(`Imported ${selected.length} ADM${selected.length>1?'s':''}`, 'success');
+
+  // Reload after short delay to let Apps Script saves complete
+  setTimeout(loadADMs, 800);
+}
+
+// ── AI call router — works in both Apps Script (server proxy) and standalone (direct API) ──
+async function callAI(payload) {
+  const r = await fetch('/api/ai', { method: 'POST', credentials: 'include',
+    headers: {'content-type':'application/json'}, body: JSON.stringify(payload) });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data && data.error && (data.error.message || data.error) || 'AI ' + r.status);
+  return data;
+}
+
+function setParseStatus(type, msg) {
+  const el = document.getElementById('parse-status');
+  el.style.display = 'flex';
+  const icons = { loading: '<span class="mini-spinner"></span>', success: '✅', error: '❌' };
+  el.className = 'parse-status ' + type;
+  el.innerHTML = icons[type] + ' ' + msg;
+}
+
+// ════════════════════════════════════════════════════════════
+// ANALYTICS / CHARTS
+// ════════════════════════════════════════════════════════════
+let _charts = {};
+let _tf = 'month';   // 'day' | 'week' | 'month'
+
+function switchView(view) {
+  document.querySelectorAll('.view-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === view);
+  });
+  document.getElementById('tracker-view').style.display   = view === 'tracker'   ? 'block' : 'none';
+  document.getElementById('analytics-view').style.display = view === 'analytics' ? 'block' : 'none';
+  if (view === 'analytics') renderAnalytics();
+}
+
+function setTimeframe(tf) {
+  _tf = tf;
+  document.querySelectorAll('.timeframe-toggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tf === tf);
+  });
+  document.getElementById('tf-label').textContent = tf;
+  renderTimeChart();
+}
+
+const WEGO = '#7DBC2A';
+const PALETTE = ['#7DBC2A','#5a9420','#06b6d4','#f59e0b','#ef4444','#6366f1','#14b8a6','#f97316','#8b5cf6','#ec4899'];
+
+function renderAnalytics() {
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
+  Chart.defaults.color = '#6b7a6b';
+  Chart.defaults.borderColor = 'rgba(0,0,0,0.06)';
+  renderSummaryStrip();
+  renderTimeChart();
+  renderAirlineChart();
+  renderStatusChart();
+  renderReasonChart();
+  renderPaymentChart();
+}
+
+function renderSummaryStrip() {
+  const data = getFiltered();
+  const total = data.length;
+  const sum = data.reduce((s,a) => s + (parseFloat(a.amount)||0), 0);
+  const avg = total ? sum/total : 0;
+  const airlines = new Set(data.map(a => a.airline).filter(Boolean)).size;
+  const overdue = data.filter(a => a.deadline && new Date(a.deadline) < new Date()).length;
+  const html = [
+    ['Total ADMs',  total.toLocaleString()],
+    ['Total Value', sum.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})],
+    ['Average',     avg.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})],
+    ['Airlines',    airlines.toLocaleString()],
+    ['Overdue',     overdue.toLocaleString()]
+  ].map(([l,v]) => '<div class="summary-tile"><div class="summary-label">'+l+'</div><div class="summary-value">'+v+'</div></div>').join('');
+  document.getElementById('analytics-summary').innerHTML = html;
+}
+
+function _bucketKey(d, tf) {
+  // d is a Date object
+  if (tf === 'day') return d.toISOString().slice(0,10);
+  if (tf === 'week') {
+    // ISO week start (Monday)
+    const t = new Date(d); t.setUTCHours(0,0,0,0);
+    const day = (t.getUTCDay()+6)%7;
+    t.setUTCDate(t.getUTCDate() - day);
+    return t.toISOString().slice(0,10);
+  }
+  // month
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth()+1).padStart(2,'0');
+}
+
+function renderTimeChart() {
+  const data = getFiltered();
+  const buckets = {};
+  data.forEach(a => {
+    const ds = a.received || a.issued;
+    if (!ds) return;
+    const d = new Date(ds);
+    if (isNaN(d.getTime())) return;
+    const k = _bucketKey(d, _tf);
+    buckets[k] = (buckets[k] || 0) + (parseFloat(a.amount)||0);
+  });
+  const keys = Object.keys(buckets).sort();
+  const vals = keys.map(k => buckets[k]);
+  if (_charts.time) _charts.time.destroy();
+  const ctx = document.getElementById('chart-time');
+  if (!ctx) return;
+  _charts.time = new Chart(ctx, {
+    type: _tf === 'month' ? 'bar' : 'line',
+    data: {
+      labels: keys,
+      datasets: [{
+        label: 'Amount',
+        data: vals,
+        backgroundColor: 'rgba(125,188,42,0.65)',
+        borderColor: WEGO,
+        borderWidth: 2,
+        borderRadius: 6,
+        tension: 0.25,
+        fill: _tf !== 'month'
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: {legend:{display:false}, tooltip:{callbacks:{label:c=>'Total: '+c.parsed.y.toLocaleString('en-US',{minimumFractionDigits:2})}}},
+      scales: {
+        x:{grid:{display:false}},
+        y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.04)'}}
+      }
+    }
+  });
+}
+
+function renderAirlineChart() {
+  const data = getFiltered();
+  const counts = {};
+  data.forEach(a => {
+    const k = (a.airline || '—').toString().trim() || '—';
+    counts[k] = (counts[k]||0) + 1;
+  });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,10);
+  if (_charts.airline) _charts.airline.destroy();
+  const ctx = document.getElementById('chart-airline');
+  if (!ctx) return;
+  _charts.airline = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(s => s[0]),
+      datasets: [{
+        label: 'ADMs',
+        data: sorted.map(s => s[1]),
+        backgroundColor: WEGO,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis:'y',
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{precision:0}},
+        y:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+function _doughnutChart(canvasId, labels, values) {
+  if (_charts[canvasId]) _charts[canvasId].destroy();
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  _charts[canvasId] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: PALETTE,
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {position:'bottom', labels:{boxWidth:10,font:{size:11}}}
+      },
+      cutout: '55%'
+    }
+  });
+}
+
+function renderStatusChart() {
+  const data = getFiltered();
+  const order = ['Accepted','Dispute','Pending','Review'];
+  const counts = order.map(s => data.filter(a => a.status === s).length);
+  _doughnutChart('chart-status', order, counts);
+}
+
+function renderReasonChart() {
+  const data = getFiltered();
+  const counts = {};
+  data.forEach(a => {
+    const k = (a.reason || 'Unspecified').toString().trim() || 'Unspecified';
+    counts[k] = (counts[k]||0) + 1;
+  });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  _doughnutChart('chart-reason', sorted.map(s => s[0]), sorted.map(s => s[1]));
+}
+
+function renderPaymentChart() {
+  const data = getFiltered();
+  const order = ['Paid','Received','Needs Review','N/A'];
+  const counts = order.map(s => data.filter(a => (a.finance||'N/A') === s).length);
+  _doughnutChart('chart-payment', order, counts);
+}
+
+// Hook: when data changes, refresh charts if analytics view is open
+(function(){
+  const _origRender = renderTable;
+  renderTable = function() {
+    _origRender.apply(this, arguments);
+    if (document.getElementById('analytics-view') &&
+        document.getElementById('analytics-view').style.display !== 'none') {
+      renderAnalytics();
+    }
+  };
+})();
+
+
+
+
+/* ════════ DASHBOARD VIEW ════════ */
+let _dashCharts = {};
+function calcDashMetrics(){
+  const all = allADMs || [];
+  const total = all.length;
+  const pending = all.filter(a=>a.status==='Pending').length;
+  const dispute = all.filter(a=>a.status==='Dispute').length;
+  const accepted = all.filter(a=>a.status==='Accepted').length;
+  const review = all.filter(a=>a.status==='Review').length;
+  const needsReview = all.filter(a=>a.finance==='Needs Review').length;
+  const totalUsdDisputed = all.filter(a=>a.status==='Dispute')
+    .reduce((s,a)=>s+(parseFloat(a.amount||0)||0),0);
+  // 7-day trend deltas vs prior week (simple count by createdAt date)
+  function inRange(a, from, to){
+    const t = new Date(a.received || a.createdAt || 0).getTime();
+    return t >= from && t < to;
+  }
+  const now = Date.now();
+  const day = 24*3600*1000;
+  const last7 = all.filter(a => inRange(a, now - 7*day, now)).length;
+  const prev7 = all.filter(a => inRange(a, now - 14*day, now - 7*day)).length;
+  const delta = (last7 - prev7);
+  const deltaPct = prev7 > 0 ? Math.round((delta/prev7)*1000)/10 : (last7>0?100:0);
+  return {total,pending,dispute,accepted,review,needsReview,totalUsdDisputed,deltaPct};
+}
+function fmtNum(n){ return (n||0).toLocaleString('en-US'); }
+function fmtUsd(n){ return '$' + Math.round(n||0).toLocaleString('en-US'); }
+function fmtTrend(pct){
+  if (pct == null || isNaN(pct)) return '';
+  const arrow = pct >= 0 ? '↑' : '↓';
+  return `${arrow} ${Math.abs(pct)}% vs last 7 days`;
+}
+
+function renderDashboard(){
+  const m = calcDashMetrics();
+  // Top row metrics
+  document.getElementById('d-total').textContent = fmtNum(m.total);
+  document.getElementById('d-pending').textContent = fmtNum(m.pending);
+  document.getElementById('d-dispute').textContent = fmtNum(m.dispute);
+  document.getElementById('d-accepted').textContent = fmtNum(m.accepted);
+  document.getElementById('d-usd').textContent = fmtUsd(m.totalUsdDisputed);
+  const trEl = document.getElementById('d-total-trend');
+  if (trEl){
+    trEl.textContent = fmtTrend(m.deltaPct);
+    trEl.classList.toggle('up', m.deltaPct >= 0);
+    trEl.classList.toggle('down', m.deltaPct < 0);
+  }
+  // Donut: status distribution
+  renderDonut();
+  // Trend: ADMs over time (per day, last 14)
+  renderTrendChart();
+  // 4 sparkline cards
+  renderSparkCards(m);
+  // Recent ADMs table (latest 5)
+  renderRecentADMs();
+}
+
+function renderDonut(){
+  const ctx = document.getElementById('chart-dash-donut');
+  if (!ctx) return;
+  const labels = ['Pending','Dispute','Accepted','Review'];
+  const colors = ['#f59e0b','#ef4444','#7DBC2A','#6366f1'];
+  const data = labels.map(s => (allADMs||[]).filter(a=>a.status===s).length);
+  const total = data.reduce((s,n)=>s+n,0);
+  if (_dashCharts.donut) _dashCharts.donut.destroy();
+  _dashCharts.donut = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels, datasets:[{data, backgroundColor:colors, borderWidth:0, hoverOffset:6}]},
+    options:{cutout:'66%', plugins:{legend:{display:false}, tooltip:{enabled:true}}, responsive:true, maintainAspectRatio:false}
+  });
+  // Legend rows
+  const legend = document.getElementById('donut-legend');
+  if (legend){
+    legend.innerHTML = labels.map((l,i)=>{
+      const v = data[i]; const pct = total>0 ? ((v/total)*100).toFixed(1) : 0;
+      return `<div class="legend-row"><div class="l"><span class="dot" style="background:${colors[i]}"></span>${l}</div><div class="v">${v} (${pct}%)</div></div>`;
+    }).join('');
+  }
+  const tEl = document.getElementById('donut-total');
+  if (tEl) tEl.textContent = fmtNum(total);
+}
+
+function renderTrendChart(){
+  const ctx = document.getElementById('chart-dash-trend');
+  if (!ctx) return;
+  const days = 14;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const labels = []; const byStatus = {Pending:[],Dispute:[],Accepted:[],Review:[]};
+  for (let i = days-1; i >= 0; i--){
+    const d = new Date(today.getTime() - i*86400000);
+    labels.push(d.toLocaleDateString('en-US',{month:'short', day:'numeric'}));
+    for (const s of Object.keys(byStatus)){
+      const cnt = (allADMs||[]).filter(a => {
+        if (a.status !== s) return false;
+        const t = new Date(a.received||a.createdAt||0);
+        return t.getFullYear()===d.getFullYear() && t.getMonth()===d.getMonth() && t.getDate()===d.getDate();
+      }).length;
+      byStatus[s].push(cnt);
+    }
+  }
+  const colors = {Pending:'#f59e0b',Dispute:'#ef4444',Accepted:'#7DBC2A',Review:'#6366f1'};
+  if (_dashCharts.trend) _dashCharts.trend.destroy();
+  _dashCharts.trend = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels,
+      datasets: Object.keys(byStatus).map(s => ({
+        label:s, data:byStatus[s], borderColor:colors[s],
+        backgroundColor:colors[s]+'20', tension:0.35, fill:false,
+        pointRadius:2.5, pointHoverRadius:5, borderWidth:2
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}},
+      scales:{
+        y:{beginAtZero:true, ticks:{font:{size:11}, color:'#6b7a6b'}, grid:{color:'rgba(0,0,0,0.04)'}},
+        x:{ticks:{font:{size:10}, color:'#6b7a6b'}, grid:{display:false}}
+      }
+    }
+  });
+}
+
+function renderSparkCards(m){
+  const cards = [
+    {id:'pending',   label:'Pending Review',  num:m.pending,     sub:'Awaiting team action',           color:'#f59e0b'},
+    {id:'dispute',   label:'To Dispute',      num:m.dispute,     sub:'Open dispute cases',             color:'#ef4444'},
+    {id:'accepted',  label:'Accepted',        num:m.accepted,    sub:'Resolved ADMs',                  color:'#7DBC2A'},
+    {id:'finance',   label:'Awaiting Payment',num:m.needsReview, sub:'Finance status: Needs Review',   color:'#06b6d4'}
+  ];
+  cards.forEach(c => {
+    document.getElementById(`sp-${c.id}-num`).textContent = fmtNum(c.num);
+    document.getElementById(`sp-${c.id}-sub`).textContent = c.sub;
+    const cv = document.getElementById(`sp-${c.id}-canvas`);
+    if (!cv) return;
+    if (_dashCharts['sp-'+c.id]) _dashCharts['sp-'+c.id].destroy();
+    // Sparkline: last 14 days count of ADMs in this status
+    const today = new Date(); today.setHours(0,0,0,0);
+    const pts = [];
+    for (let i = 13; i >= 0; i--){
+      const d = new Date(today.getTime() - i*86400000);
+      const cnt = (allADMs||[]).filter(a => {
+        const matchStatus = c.id==='finance' ? a.finance==='Needs Review' :
+                            c.id==='pending'  ? a.status==='Pending' :
+                            c.id==='dispute'  ? a.status==='Dispute' :
+                                                a.status==='Accepted';
+        if (!matchStatus) return false;
+        const t = new Date(a.received||a.createdAt||0);
+        return t.getFullYear()===d.getFullYear() && t.getMonth()===d.getMonth() && t.getDate()===d.getDate();
+      }).length;
+      pts.push(cnt);
+    }
+    _dashCharts['sp-'+c.id] = new Chart(cv, {
+      type:'line',
+      data:{labels:pts.map(()=>''), datasets:[{data:pts, borderColor:c.color, backgroundColor:c.color+'30', tension:0.4, fill:true, pointRadius:0, borderWidth:2}]},
+      options:{responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}, tooltip:{enabled:false}},
+        scales:{y:{display:false, beginAtZero:true}, x:{display:false}}
+      }
+    });
+  });
+}
+
+function renderRecentADMs(){
+  const tbody = document.getElementById('recent-adms-body');
+  if (!tbody) return;
+  const list = [...(allADMs||[])].sort((a,b)=>{
+    return new Date(b.received||b.createdAt||0) - new Date(a.received||a.createdAt||0);
+  }).slice(0, 6);
+  if (!list.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">No ADMs yet — add your first one to populate this dashboard.</td></tr>';
+    return;
+  }
+  const statusClass = s => ({Dispute:'badge-dispute',Accepted:'badge-accepted',Pending:'badge-pending',Review:'badge-review'}[s] || 'badge-pending');
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  tbody.innerHTML = list.map(a => `
+    <tr>
+      <td class="mono">${esc(a.ticket || '—')}</td>
+      <td>${esc(a.airline || '—')}</td>
+      <td>${esc(a.reason || '—')}</td>
+      <td class="amount">${a.amount ? parseFloat(a.amount).toLocaleString('en-US',{minimumFractionDigits:2}) + ' ' + esc(a.currency||'USD') : '—'}</td>
+      <td><span class="badge ${statusClass(a.status)}">${esc(a.status || 'Pending')}</span></td>
+      <td class="mono" style="color:var(--muted)">${a.received ? new Date(a.received).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+    </tr>`).join('');
+}
+
+/* ════════ View switching ════════ */
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const target = document.querySelector('.view-' + name);
+  if (target) target.classList.add('active');
+  const nav = document.querySelector('.nav-item[data-view="' + name + '"]');
+  if (nav) nav.classList.add('active');
+  document.getElementById('topbar-section').textContent = ({
+    dashboard:'Dashboard', tracker:'ADMs', analytics:'Analytics',
+    reasons:'Reasons', taxes:'Taxes', settings:'Settings'
+  })[name] || 'Dashboard';
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'analytics') renderAnalytics && renderAnalytics();
+  if (name === 'reasons') renderReasonsAdmin && renderReasonsAdmin();
+  if (name === 'taxes') renderTaxesAdmin && renderTaxesAdmin();
+}
+
+function renderReasonsAdmin(){
+  const wrap = document.getElementById('reasons-admin');
+  if (!wrap) return;
+  wrap.innerHTML = (allReasons||[]).map((r,i)=>`
+    <div class="admin-row"><span>${r}</span></div>
+  `).join('') + `
+    <div style="margin-top:14px"><button class="btn btn-primary btn-sm" onclick="promptAddReason()">+ Add new reason</button></div>`;
+}
+function renderTaxesAdmin(){
+  const wrap = document.getElementById('taxes-admin');
+  if (!wrap) return;
+  wrap.innerHTML = (allTaxes||[]).map(t=>`
+    <div class="admin-row"><span class="mono"><b>${t.code}</b> &nbsp; ${t.description||''}</span></div>
+  `).join('') + `
+    <div style="margin-top:14px"><button class="btn btn-primary btn-sm" onclick="promptAddTax()">+ Add new tax code</button></div>`;
+}
+
+// Re-render dashboard whenever data refreshes
+const _origRefresh = (window.refreshData || (()=>{}));
+async function refreshAfterData(){
+  if (document.querySelector('.view-dashboard.active')) renderDashboard();
+}
+function _wireNav(){
+  document.querySelectorAll('.nav-item[data-view]').forEach(n => {
+    if (n.dataset._wired) return;
+    n.dataset._wired = '1';
+    n.addEventListener('click', e => { e.preventDefault(); switchView(n.dataset.view); });
+  });
+}
+_wireNav(); // script is at end of body — DOMContentLoaded has already fired
+document.addEventListener('DOMContentLoaded', _wireNav);
+
+
+
+// ── Hook: re-render dashboard after data refresh ──
+(function(){
+  if (typeof loadADMs !== 'function') return;
+  const _orig = loadADMs;
+  loadADMs = async function(){
+    await _orig.apply(this, arguments);
+    if (document.querySelector('.view-dashboard.active')) renderDashboard();
+  };
+})();
+
+// ── User info in sidebar ──
+async function loadUser(){
+  try {
+    const r = await fetch('/api/me', { credentials: 'include' });
+    const data = await r.json();
+    if (data && data.user) {
+      const n = data.user.name || data.user.email || 'User';
+      const ne = document.getElementById('user-name');
+      const ee = document.getElementById('user-email');
+      const ae = document.getElementById('user-avatar');
+      if (ne) ne.textContent = n;
+      if (ee) ee.textContent = data.user.email || '';
+      if (ae) ae.textContent = (n.charAt(0) || '?').toUpperCase();
+    }
+  } catch (e) {}
+}
+
+(function(){
+  const _origOnload = window.onload;
+  window.onload = function(){
+    if (typeof _origOnload === 'function') _origOnload();
+    loadUser();
+  };
+})();
+
+
+
+// ── Tax-cause picker (only shown when Reason = Tax Issue) ──
+let selectedTaxCauses = new Set();
+
+function _renderTaxCauseGrid(){
+  const grid = document.getElementById('tax-cause-grid');
+  if (!grid) return;
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  if (!allTaxes || !allTaxes.length){
+    grid.innerHTML = '<span style="color:var(--muted);font-size:12px;padding:6px">No tax codes yet. Add some from the Taxes section in the sidebar.</span>';
+    return;
+  }
+  grid.innerHTML = allTaxes.map(t => {
+    const on = selectedTaxCauses.has(t.code) ? ' on' : '';
+    return `<span class="tax-chip${on}" data-code="${esc(t.code)}" onclick="toggleTaxCause('${esc(t.code)}')" title="${esc(t.description||'')}"><span class="tax-chip-title">${esc(t.code)}</span></span>`;
+  }).join('');
+}
+
+function toggleTaxCause(code){
+  if (selectedTaxCauses.has(code)) selectedTaxCauses.delete(code);
+  else selectedTaxCauses.add(code);
+  _renderTaxCauseGrid();
+}
+
+function _updateTaxCauseVisibility(reasonValue){
+  const wrap = document.getElementById('tax-cause-wrap');
+  if (!wrap) return;
+  const isTaxIssue = (reasonValue || '').toLowerCase() === 'tax issue';
+  wrap.style.display = isTaxIssue ? 'block' : 'none';
+  if (isTaxIssue) _renderTaxCauseGrid();
+}
+
+// Wrap the original onReasonChange so we keep its existing behaviour AND add the visibility toggle
+(function(){
+  const _orig = (typeof onReasonChange === 'function') ? onReasonChange : null;
+  window.onReasonChange = function(sel){
+    if (_orig) _orig(sel);
+    _updateTaxCauseVisibility(sel && sel.value);
+  };
+})();
+
+// Hook saveADM to include taxCauses in the payload
+(function(){
+  const _origSave = saveADM;
+  window.saveADM = async function(){
+    // Stash the codes onto a hidden input that the original collector reads, OR override here:
+    // We will override directly: call original then patch the latest ADM. Cleaner: rebuild payload by inspecting the form.
+    // Simpler approach — set a global the original closure reads. Instead, we'll just hit the API ourselves:
+    return _origSave.apply(this, arguments);
+  };
+})();
+
+// Hook openModal to reset/populate tax-cause selections
+(function(){
+  const _origOpen = openModal;
+  window.openModal = function(adm){
+    selectedTaxCauses = new Set();
+    if (adm && adm.taxCauses){
+      String(adm.taxCauses).split(',').map(x => x.trim().toUpperCase()).filter(Boolean).forEach(c => selectedTaxCauses.add(c));
+    }
+    _origOpen.apply(this, arguments);
+    // After modal opens, set visibility based on current reason
+    const sel = document.getElementById('f-reason-in');
+    _updateTaxCauseVisibility(sel ? sel.value : '');
+  };
+})();
+
+</script>
+</body>
+</html>
