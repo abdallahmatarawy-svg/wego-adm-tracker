@@ -310,6 +310,31 @@ table.parsed-table th{font-size:10px;font-weight:600;color:var(--muted);text-tra
 
 .admin-row{padding:8px 10px;border-bottom:1px solid var(--border);font-size:13px}
 .admin-row:last-child{border-bottom:none}
+
+/* ─── Add/Edit ADM modal — redesigned ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(28,42,12,0.48);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;animation:fade .15s ease}
+.modal-bg .modal{background:var(--surface);border-radius:18px;max-width:820px;width:100%;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.22);overflow:hidden}
+.modal-header{padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,var(--surface2) 0%,var(--surface) 100%)}
+.modal-title{font-size:18px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:10px}
+.modal-title::before{content:"";display:inline-block;width:8px;height:18px;background:var(--accent);border-radius:3px}
+.close-btn{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-size:14px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:all .15s;line-height:1}
+.close-btn:hover{background:var(--surface2);color:var(--danger);border-color:rgba(239,68,68,0.3)}
+.form-grid{padding:22px 28px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+.form-section{display:flex;flex-direction:column;gap:10px}
+.form-section-title{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:var(--accent-h);padding-bottom:6px;border-bottom:1px dashed rgba(125,188,42,0.3);display:flex;align-items:center;gap:6px}
+.form-section-title .form-section-ico{display:inline-flex;width:20px;height:20px;border-radius:5px;background:rgba(125,188,42,0.14);color:var(--accent-h);align-items:center;justify-content:center;font-size:11px}
+.form-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.form-row.row-3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:680px){.form-row,.form-row.row-3{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;line-height:1.3}
+.form-group input[type=text],.form-group input[type=number],.form-group input[type=date],.form-group select,.form-select,.form-group textarea,.form-input{width:100%;background:var(--surface);border:1.5px solid var(--border2);border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none;transition:all .15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus,.form-input:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(125,188,42,0.15);background:#fafdf6}
+.form-group textarea{resize:vertical;min-height:72px;font-family:var(--sans)}
+.modal-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--surface2)}
+.modal-footer .btn{padding:10px 20px;font-weight:600}
+
 </style>
 </head>
 <body>
@@ -803,64 +828,150 @@ table.parsed-table th{font-size:10px;font-weight:600;color:var(--muted);text-tra
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="modal-title">Add ADM</div>
-      <button class="close-btn" onclick="closeModal()">✕</button>
+      <button class="close-btn" onclick="closeModal()" aria-label="Close">✕</button>
     </div>
     <div class="form-grid">
-      <div class="form-group">
-        <label>Received Date</label>
-        <input type="date" id="f-received">
+
+      <!-- Dates -->
+      <div class="form-section">
+        <div class="form-section-title"><span class="form-section-ico">📅</span> Dates</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Received Date</label>
+            <input type="date" id="f-received">
+          </div>
+          <div class="form-group">
+            <label>ADM Issued Date</label>
+            <input type="date" id="f-issued">
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label>ADM Issued Date</label>
-        <input type="date" id="f-issued">
+
+      <!-- Identification -->
+      <div class="form-section">
+        <div class="form-section-title"><span class="form-section-ico">✈</span> Identification</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Airline</label>
+            <input type="text" id="f-airline-in" placeholder="e.g. Emirates">
+          </div>
+          <div class="form-group">
+            <label>Supplier</label>
+            <input type="text" id="f-supplier" placeholder="e.g. Amadeus">
+          </div>
+          <div class="form-group">
+            <label>GDS</label>
+            <input type="text" id="f-gds" placeholder="e.g. Amadeus / Sabre">
+          </div>
+          <div class="form-group">
+            <label>PCC</label>
+            <input type="text" id="f-pcc" placeholder="e.g. DXB1">
+          </div>
+          <div class="form-group full">
+            <label>Ticket No(s)</label>
+            <input type="text" id="f-ticket" placeholder="e.g. 176-1234567 (comma-separate multiple)">
+          </div>
+          <div class="form-group full">
+            <label>PNR(s)</label>
+            <input type="text" id="f-pnr" placeholder="e.g. ABC123, XYZ789">
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Airline</label>
-        <input type="text" id="f-airline-in" placeholder="e.g. Emirates">
+
+      <!-- Financial -->
+      <div class="form-section">
+        <div class="form-section-title"><span class="form-section-ico">$</span> Financial</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Amount</label>
+            <input type="number" id="f-amount" placeholder="0.00" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Currency</label>
+            <select class="form-select" id="f-currency">
+              <option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option><option>CHF</option><option>AUD</option><option>CAD</option><option>NZD</option><option>CNY</option><option>HKD</option><option>SGD</option><option>KRW</option><option>INR</option><option>AED</option><option>SAR</option><option>KWD</option><option>BHD</option><option>OMR</option><option>QAR</option><option>JOD</option><option>LBP</option><option>EGP</option><option>MAD</option><option>TND</option><option>DZD</option><option>LYD</option><option>IQD</option><option>IRR</option><option>YER</option><option>AFN</option><option>SYP</option><option>SDG</option><option>TRY</option><option>ILS</option><option>ZAR</option><option>NGN</option><option>KES</option><option>UGX</option><option>TZS</option><option>GHS</option><option>ETB</option><option>MUR</option><option>PKR</option><option>BDT</option><option>LKR</option><option>NPR</option><option>BTN</option><option>MVR</option><option>MYR</option><option>IDR</option><option>THB</option><option>VND</option><option>PHP</option><option>TWD</option><option>MMK</option><option>KHR</option><option>LAK</option><option>BND</option><option>MOP</option><option>KZT</option><option>UZS</option><option>KGS</option><option>TJS</option><option>TMT</option><option>AZN</option><option>GEL</option><option>AMD</option><option>BYN</option><option>MDL</option><option>UAH</option><option>RUB</option><option>PLN</option><option>CZK</option><option>HUF</option><option>RON</option><option>BGN</option><option>HRK</option><option>SEK</option><option>NOK</option><option>DKK</option><option>ISK</option><option>BRL</option><option>MXN</option><option>ARS</option><option>CLP</option><option>COP</option><option>PEN</option><option>UYU</option><option>PYG</option><option>BOB</option><option>VES</option><option>XOF</option><option>XAF</option><option>MZN</option><option>AOA</option><option>XCD</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Supplier</label>
-        <input type="text" id="f-supplier" placeholder="e.g. Amadeus">
+
+      <!-- Categorization -->
+      <div class="form-section">
+        <div class="form-section-title"><span class="form-section-ico">◉</span> Categorization</div>
+        <div class="form-group full">
+          <label>Reason</label>
+          <select class="form-select" id="f-reason-in" onchange="onReasonChange(this)">
+            <option value="">Select reason</option>
+          </select>
+          <button type="button" class="reason-add-link" onclick="promptAddReason()">+ Add new reason</button>
+        </div>
+        <div id="tax-cause-wrap" class="form-group full" style="display:none">
+          <label>Which tax(es) caused this ADM? <span style="text-transform:none;font-weight:400;color:var(--muted)">(click to select one or more)</span></label>
+          <div class="tax-grid" id="tax-cause-grid"></div>
+        </div>
+        <div class="form-group full">
+          <label>Caused By <span style="text-transform:none;font-weight:400;color:var(--muted)">(check all that apply)</span></label>
+          <div class="check-grid" id="f-causedby-grid"></div>
+        </div>
+        <div class="form-group full">
+          <label>Platform <span style="text-transform:none;font-weight:400;color:var(--muted)">(check all that apply)</span></label>
+          <div class="check-grid" id="f-platform-grid"></div>
+        </div>
       </div>
-      <div class="form-group">
-        <label>GDS</label>
-        <input type="text" id="f-gds" placeholder="e.g. Amadeus / Sabre">
+
+      <!-- Status & Workflow -->
+      <div class="form-section">
+        <div class="form-section-title"><span class="form-section-ico">⚑</span> Status &amp; Workflow</div>
+        <div class="form-row row-3">
+          <div class="form-group">
+            <label>Finance · Payment</label>
+            <select class="form-select" id="f-finance">
+              <option value="N/A">N/A</option>
+              <option value="Needs Review">Needs Review</option>
+              <option value="Paid">Paid</option>
+              <option value="Received">Received</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select class="form-select" id="f-status-in">
+              <option>Pending</option>
+              <option>Dispute</option>
+              <option>Accepted</option>
+              <option>Review</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Dispute Deadline</label>
+            <input type="date" id="f-deadline">
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label>PCC</label>
-        <input type="text" id="f-pcc" placeholder="e.g. DXB1">
+
+      <!-- Taxes -->
+      <div class="form-section">
+        <div class="form-section-title"><span class="form-section-ico">%</span> Non-Refundable Taxes</div>
+        <div class="form-group full">
+          <div class="tax-grid" id="f-taxes-grid"></div>
+          <div style="margin-top:8px"><button type="button" class="tax-add-btn" onclick="promptAddTax()">+ Add new tax code</button></div>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Ticket No(s)</label>
-        <input type="text" id="f-ticket" placeholder="e.g. 176-1234567 (comma-separate multiple)">
+
+      <!-- Notes -->
+      <div class="form-section">
+        <div class="form-section-title"><span class="form-section-ico">✎</span> Notes</div>
+        <div class="form-group full">
+          <textarea id="f-notes" placeholder="Any relevant notes, context, or dispute references…"></textarea>
+        </div>
       </div>
-      <div class="form-group">
-        <label>PNR(s)</label>
-        <input type="text" id="f-pnr" placeholder="e.g. ABC123, XYZ789">
-      </div>
-      <div class="form-group">
-        <label>Amount</label>
-        <input type="number" id="f-amount" placeholder="0.00" step="0.01">
-      </div>
-      <div class="form-group">
-        <label>Currency</label>
-        <select class="form-select" id="f-currency">
-          <option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option><option>CHF</option><option>AUD</option><option>CAD</option><option>NZD</option><option>CNY</option><option>HKD</option><option>SGD</option><option>KRW</option><option>INR</option><option>AED</option><option>SAR</option><option>KWD</option><option>BHD</option><option>OMR</option><option>QAR</option><option>JOD</option><option>LBP</option><option>EGP</option><option>MAD</option><option>TND</option><option>DZD</option><option>LYD</option><option>IQD</option><option>IRR</option><option>YER</option><option>AFN</option><option>SYP</option><option>SDG</option><option>TRY</option><option>ILS</option><option>ZAR</option><option>NGN</option><option>KES</option><option>UGX</option><option>TZS</option><option>GHS</option><option>ETB</option><option>MUR</option><option>PKR</option><option>BDT</option><option>LKR</option><option>NPR</option><option>BTN</option><option>MVR</option><option>MYR</option><option>IDR</option><option>THB</option><option>VND</option><option>PHP</option><option>TWD</option><option>MMK</option><option>KHR</option><option>LAK</option><option>BND</option><option>MOP</option><option>KZT</option><option>UZS</option><option>KGS</option><option>TJS</option><option>TMT</option><option>AZN</option><option>GEL</option><option>AMD</option><option>BYN</option><option>MDL</option><option>UAH</option><option>RUB</option><option>PLN</option><option>CZK</option><option>HUF</option><option>RON</option><option>BGN</option><option>HRK</option><option>SEK</option><option>NOK</option><option>DKK</option><option>ISK</option><option>BRL</option><option>MXN</option><option>ARS</option><option>CLP</option><option>COP</option><option>PEN</option><option>UYU</option><option>PYG</option><option>BOB</option><option>VES</option><option>XOF</option><option>XAF</option><option>MZN</option><option>AOA</option><option>XCD</option>
-          <option>GBP</option><option>SGD</option><option>SAR</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Reason</label>
-        <select class="form-select" id="f-reason-in" onchange="onReasonChange(this)">
-          <option value="">Select reason</option>
-        </select>
-        <button type="button" class="reason-add-link" onclick="promptAddReason()">+ Add new reason</button>
-      <!-- Tax-issue cause: appears only when Reason = Tax Issue -->
-      <div id="tax-cause-wrap" class="form-field full" style="display:none;margin-top:10px">
-        <label>Which tax(es) caused this ADM? <span style="text-transform:none;font-weight:400;color:var(--muted)">(click to select one or more)</span></label>
-        <div class="tax-grid" id="tax-cause-grid"></div>
-      </div>
-      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveADM()">Save ADM</button>
+    </div>
+  </div>
+</div>
       <div class="form-group full">
         <label>Caused By <span style="text-transform:none;font-weight:400;color:var(--muted)">(check all that apply)</span></label>
         <div class="check-grid" id="f-causedby-grid"></div>
