@@ -300,7 +300,21 @@
     <div class="field"><label>Password</label><input type="password" id="password" required autocomplete="current-password"></div>
     <button class="btn" id="btn" type="submit">Sign In</button>
   </form>
+  <div class="switch" style="margin-top:12px"><a href="#" onclick="event.preventDefault();showForgot()">Forgot password?</a></div>
   <div class="switch">Don't have an account? <a href="/signup">Request access</a></div>
+
+  <!-- Forgot password form -->
+  <div id="forgot-screen" style="display:none">
+    <h1 style="margin-top:0">Reset password</h1>
+    <p class="lede">Enter your email — we'll send you a link to set a new password.</p>
+    <div id="fp-err" class="err"></div>
+    <div id="fp-ok" class="info" style="display:none">If that email exists in our system, a reset link is on its way. Check your inbox.</div>
+    <form onsubmit="submitForgot(event)">
+      <div class="field"><label>Email</label><input type="email" id="fp-email" required autocomplete="email"></div>
+      <button class="btn" id="fp-btn" type="submit">Send reset link</button>
+    </form>
+    <div class="switch" style="margin-top:14px"><a href="#" onclick="event.preventDefault();showLogin()">← Back to sign in</a></div>
+  </div>
 </div>
 <script>
   const params = new URLSearchParams(location.search);
@@ -335,6 +349,41 @@
       btn.disabled = false; btn.textContent = 'Sign In';
     }
   }
+
+
+function _loginVisibleEls(){
+  return Array.from(document.querySelectorAll('.card > *')).filter(el => el.id !== 'forgot-screen');
+}
+function showForgot(){
+  _loginVisibleEls().forEach(el => { el.dataset._prevDisplay = el.style.display; el.style.display = 'none'; });
+  document.getElementById('forgot-screen').style.display = 'block';
+}
+function showLogin(){
+  document.getElementById('forgot-screen').style.display = 'none';
+  _loginVisibleEls().forEach(el => { el.style.display = el.dataset._prevDisplay || ''; });
+}
+async function submitForgot(e){
+  e.preventDefault();
+  const btn = document.getElementById('fp-btn');
+  const err = document.getElementById('fp-err');
+  const ok  = document.getElementById('fp-ok');
+  err.style.display = 'none'; ok.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try {
+    const r = await fetch('/api/forgot-password', {
+      method: 'POST', headers: {'content-type':'application/json'},
+      body: JSON.stringify({ email: document.getElementById('fp-email').value })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Request failed');
+    ok.style.display = 'block';
+    btn.textContent = 'Sent';
+  } catch (e){
+    err.textContent = e.message; err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Send reset link';
+  }
+}
+
 </script>
 </body>
 </html>
