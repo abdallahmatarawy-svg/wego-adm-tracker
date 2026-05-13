@@ -1319,7 +1319,7 @@ function editADM(id) {
   if (adm) openModal(adm);
 }
 
-function saveADM() {
+async function saveADM() {
   closeModal();
   try {
     const r = await fetch('/api/adms', { method: 'POST', credentials: 'include',
